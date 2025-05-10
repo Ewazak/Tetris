@@ -1,13 +1,4 @@
-/**
- * Copyright (C) 2025  AGH University of Science and Technology
- * MTM UEC2
- * Author: Piotr Kaczmarczyk
- *
- * Description:
- * Draw background.
- */
-
- module draw_bg (
+module draw_bg (
     input  logic clk,
     input  logic rst,
 
@@ -28,67 +19,51 @@
     output logic [11:0] rgb_out
 );
 
-timeunit 1ns;
-timeprecision 1ps;
+    import vga_pkg::*;
 
-import vga_pkg::*;
+    logic [11:0] rgb_nxt;
 
-
-/**
- * Local variables and signals
- */
-
-logic [11:0] rgb_nxt;
-
-
-/**
- * Internal logic
- */
-
-always_ff @(posedge clk) begin : bg_ff_blk
-    if (rst) begin
-        vcount_out <= '0;
-        vsync_out  <= '0;
-        vblnk_out  <= '0;
-        hcount_out <= '0;
-        hsync_out  <= '0;
-        hblnk_out  <= '0;
-        rgb_out    <= '0;
-    end else begin
-        vcount_out <= vcount_in;
-        vsync_out  <= vsync_in;
-        vblnk_out  <= vblnk_in;
-        hcount_out <= hcount_in;
-        hsync_out  <= hsync_in;
-        hblnk_out  <= hblnk_in;
-        rgb_out    <= rgb_nxt;
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            vcount_out <= 0;
+            vsync_out  <= 0;
+            vblnk_out  <= 0;
+            hcount_out <= 0;
+            hsync_out  <= 0;
+            hblnk_out  <= 0;
+            rgb_out    <= 0;
+        end else begin
+            vcount_out <= vcount_in;
+            vsync_out  <= vsync_in;
+            vblnk_out  <= vblnk_in;
+            hcount_out <= hcount_in;
+            hsync_out  <= hsync_in;
+            hblnk_out  <= hblnk_in;
+            rgb_out    <= rgb_nxt;
+        end
     end
-end
 
-always_comb begin : bg_comb_blk
-    if (vblnk_in || hblnk_in) begin             // Blanking region:
-        rgb_nxt = 12'h0_0_0;                    // - make it it black.
-    end else begin                              // Active region:
-        if (vcount_in == 0)                     // - top edge:
-            rgb_nxt = 12'hf_f_0;                // - - make a yellow line.
-        else if (vcount_in == VER_PIXELS - 1)   // - bottom edge:
-            rgb_nxt = 12'hf_0_0;                // - - make a red line.
-        else if (hcount_in == 0)               // - left edge:
-            rgb_nxt = 12'h0_f_0;               // - - make a green line.
-        else if (hcount_in == HOR_PIXELS - 1)   // - right edge:
+    always_comb begin
+        if (vblnk_in || hblnk_in) begin
+            rgb_nxt = 12'h000;
+        end else begin
+            // Ramka
+            if (vcount_in == 0)
+                rgb_nxt = 12'hff0; // żółta góra
+            else if (vcount_in == VER_PIXELS - 1)
+                rgb_nxt = 12'hf00; // czerwona dół
+            else if (hcount_in == 0)
+                rgb_nxt = 12'h0f0; // zielona lewa
+            else if (hcount_in == HOR_PIXELS - 1)
+                rgb_nxt = 12'h00f; // niebieska prawa
 
-        rgb_nxt = 12'h0_0_f;                // - - make a blue line.
-        // Letter "E"
-        else if ( ((hcount_in >= 300 && hcount_in < 320) && (vcount_in >= 200 && vcount_in < 300)) && ((hcount_in >= 300 && hcount_in < 380) && (vcount_in == 200 || vcount_in == 250 || vcount_in == 300))
-        )
-        rgb_nxt = 12'hFFF;
-        // Letter "Ż"
-        else if ( ((hcount_in >= 400 && hcount_in < 480) && vcount_in == 200) && ((vcount_in >= 200 && vcount_in <= 300) && (hcount_in >= 400 && hcount_in < 480) && ((hcount_in - 400) >= (300 - vcount_in) *10/12 - 1 && (hcount_in - 400) <= (300 - vcount_in) *10/12-1)) && ((hcount_in >= 400 && hcount_in < 480) && vcount_in == 300) && ((hcount_in >= 430 && hcount_in < 450) && (vcount_in >= 170 && vcount_in < 190)) 
-        )  
-            rgb_nxt = 12'hFFF; 
-
-        else                                    // The rest of active display pixels:
-                rgb_nxt = 12'h8_8_8;                // - fill with gray.
+            // Napis: PRESS START – uproszczony biały blok (środek ekranu)
+            else if ((vcount_in >= 350 && vcount_in <= 370) && (hcount_in >= 412 && hcount_in <= 612))
+                rgb_nxt = 12'hfff;
+            else if ((vcount_in >= 370 && vcount_in <= 390) && ((hcount_in >= 412 && hcount_in <= 432) || (hcount_in >= 592 && hcount_in <= 612)))
+                rgb_nxt = 12'hfff;
+            else
+                rgb_nxt = 12'h444; // ciemnoszare tło
         end
     end
 
