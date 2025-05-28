@@ -7,28 +7,31 @@
  * Package with vga related constants.
  */
 
-package vga_pkg;
+ package vga_pkg;
 
-    // Horizontal and vertical parameters
-    localparam HOR_PIXELS = 800;
-    localparam VER_PIXELS = 600;
+    // Aktywna część obrazu
+    localparam HOR_PIXELS = 1024;
+    localparam VER_PIXELS = 768;
 
-    localparam HOR_TOTAL_TIME = 1056;
-    localparam VER_TOTAL_TIME = 628;
+    // Czas całkowity (pixels per line / lines per frame)
+    localparam HOR_TOTAL_TIME = 1344;
+    localparam VER_TOTAL_TIME = 806;
 
-    localparam HOR_BLANK_START = 800;
-    localparam HOR_BLANK_END = 1056;
+    // Obszar wygaszania (blanking)
+    localparam HOR_BLANK_START = 1024;
+    localparam HOR_BLANK_END   = 1344;
 
-    localparam HOR_SYNC_START = 840;
-    localparam HOR_SYNC_END = 968;
+    localparam VER_BLANK_START = 768;
+    localparam VER_BLANK_END   = 806;
 
-    localparam VER_BLANK_START = 600;
-    localparam VER_BLANK_END = 628;
+    // Synchronizacja
+    localparam HOR_SYNC_START = 1048;
+    localparam HOR_SYNC_END   = 1184;
 
-    localparam VER_SYNC_START = 601;
-    localparam VER_SYNC_END = 605;
+    localparam VER_SYNC_START = 771;
+    localparam VER_SYNC_END   = 777;
 
-    // Pixel clock
-    localparam PIXEL_CLOCK = 40000;
+    // Pixel clock (kHz)
+    localparam PIXEL_CLOCK = 65000;
 
 endpackage
