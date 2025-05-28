@@ -58,12 +58,12 @@
     wire vsync_tim, hsync_tim;
     wire vblnk_tim, hblnk_tim;
 
-    assign vs = draw_bg.vsync;
-    assign hs = draw_bg.hsync;
-    assign {r, g, b} = draw_bg.rgb;
+    assign vs = draw_mouse.vsync;
+    assign hs = draw_mouse.hsync;
+    assign {r, g, b} = draw_mouse.rgb;
 
     vga_timing u_vga_timing (
-        .clk(clk65MHz),
+        .clk(clk),
         .rst(rst),
         .vcount(vcount_tim),
         .vsync(vsync_tim),
@@ -74,7 +74,7 @@
     );
 
     draw_bg u_draw_bg (
-        .clk(clk65MHz),
+        .clk(clk),
         .rst(rst),
         .vcount_in(vcount_tim),
         .vsync_in(vsync_tim),
@@ -86,7 +86,7 @@
     );
 
     draw_rect u_draw_rect (
-        .clk(clk65MHz),
+        .clk(clk),
         .rst(rst),
         .xpos(xpos_ctl),
         .ypos(ypos_ctl),
@@ -100,7 +100,7 @@
         .CHAR_X(70),
         .CHAR_Y(70)
     ) u_draw_rect_char (
-        .clk(clk65MHz),
+        .clk(clk),
         .rst(rst),
         .char_line_pixels(char_line_pixels),
         .char_xy(char_xy),
@@ -113,7 +113,7 @@
         .CHAR_X(350),
         .CHAR_Y(350)
     ) u_draw_rect_char_2 (
-        .clk(clk65MHz),
+        .clk(clk),
         .rst(rst),
         .char_line_pixels(char_line_pixels_2),
         .char_xy(char_xy_2),
@@ -123,7 +123,7 @@
     );
 
     draw_mouse u_draw_mouse (
-        .clk(clk65MHz),
+        .clk(clk),
         .xpos(xpos_bufor),
         .ypos(ypos_bufor),
         .in(draw_rect),
@@ -132,7 +132,7 @@
     );
 
     bufor_tim u_bufor_tim (
-        .clk(clk65MHz),
+        .clk(clk),
         .rst(rst),
         .xpos(xpos),
         .ypos(ypos),
@@ -160,13 +160,13 @@
     );
 
     image_rom u_image_rom (
-        .clk(clk65MHz),
+        .clk(clk),
         .address(pixel_addr),
         .rgb(rgb)
     );
 
     draw_rect_ctl u_draw_rect_ctl (
-        .clk(clk65MHz),
+        .clk(clk),
         .rst(rst),
         .xpos(xpos_ctl),
         .ypos(ypos_ctl),
@@ -176,25 +176,25 @@
     );
 
     font_rom u_font_rom(
-        .clk(clk65MHz),
+        .clk(clk),
         .addr(addr),
         .char_line_pixels(char_line_pixels)
     );
 
      font_rom u_font_rom_2(
-        .clk(clk65MHz),
+        .clk(clk),
         .addr(addr_2),
         .char_line_pixels(char_line_pixels_2)
     );
 
     char_rom u_char_rom(
-        .clk(clk65MHz),
+        .clk(clk),
         .char_xy(char_xy),
         .char_code(char_code)
     );
 
     char_rom u_char_rom_2(
-        .clk(clk65MHz),
+        .clk(clk),
         .char_xy(char_xy_2),
         .char_code(char_code_2)
     );
