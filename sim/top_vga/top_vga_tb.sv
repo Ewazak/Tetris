@@ -30,13 +30,15 @@ module top_vga_tb;
      */
 
     localparam CLK_PERIOD = 25;     // 40 MHz
+    localparam CLK100_PERIOD = 100;
 
 
     /**
      * Local variables and signals
      */
 
-    logic clk, rst;
+    logic clk, rst, clk100MHz;
+    wire ps2data, ps2clk;
     wire vs, hs;
     wire [3:0] r, g, b;
 
@@ -50,6 +52,11 @@ module top_vga_tb;
         forever #(CLK_PERIOD/2) clk = ~clk;
     end
 
+    initial begin
+        clk = 1'b0;
+        forever #(CLK100_PERIOD/2) clk100MHz = ~clk100MHz;
+    end
+
 
     /**
      * Submodules instances
@@ -57,12 +64,16 @@ module top_vga_tb;
 
     top_vga dut (
         .clk(clk),
+        .clk100MHz(clk100MHz),
+        // .clk50Hz(clk50Hz),
         .rst(rst),
         .vs(vs),
         .hs(hs),
         .r(r),
         .g(g),
-        .b(b)
+        .b(b),
+        .ps2_clk(ps2clk),
+        .ps2_data(ps2data)
     );
 
     tiff_writer #(

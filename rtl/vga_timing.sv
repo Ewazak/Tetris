@@ -29,7 +29,7 @@ always_ff @(posedge clk) begin
         hblnk  <= '0;
         hsync  <= '0;
     end else begin
-        if (hcount == HOR_TOTAL_TIME - 1) begin
+        if (hcount == HOR_TOTAL_TIME -1) begin
             hcount <= '0;
         end else begin
             hcount <= hcount + 1;
@@ -45,8 +45,8 @@ always_ff @(posedge clk) begin
         vblnk  <= '0;
         vsync  <= '0;
     end else begin
-        if (hcount == HOR_TOTAL_TIME - 1) begin
-            if (vcount == VER_TOTAL_TIME - 1) begin
+        if (hcount == HOR_TOTAL_TIME -1) begin
+            if (vcount == VER_TOTAL_TIME -1) begin
                 vcount <= '0;
             end else begin
                 vcount <= vcount + 1;
@@ -57,7 +57,6 @@ always_ff @(posedge clk) begin
     end
 end
 endmodule
-
 
 
 

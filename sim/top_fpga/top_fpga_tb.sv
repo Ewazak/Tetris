@@ -39,6 +39,7 @@ module top_fpga_tb;
     logic clk, rst;
     wire pclk;
     wire vs, hs;
+    wire ps2_clk, ps2_data;
     wire [3:0] r, g, b;
 
 
@@ -64,7 +65,9 @@ module top_fpga_tb;
         .vgaRed(r),
         .vgaGreen(g),
         .vgaBlue(b),
-        .JA1(pclk)
+        .JA1(pclk),
+        .PS2Clk(ps2_clk),
+        .PS2Data(ps2_data)
     );
 
     tiff_writer #(

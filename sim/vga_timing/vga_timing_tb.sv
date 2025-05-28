@@ -82,40 +82,37 @@ module vga_timing_tb;
      * Assertions
      */
     //Hcount and vcount range
-    assert property (@(posedge clk) disable iff (rst)  ((hcount >= 0) && (hcount < HOR_TOTAL_TIME)))
-    else $error("Error: hcount is not in the range [0, %d]: %d", HOR_TOTAL_TIME-1, hcount);
+     assert property (@(posedge clk) disable iff (rst) ##1 ((hcount>=0)&&(hcount<1056)))
+     else $error("Error: hcount is not in the range [0,1055]: %d", hcount);
+ 
+     assert property (@(posedge clk) disable iff (rst) ##1 ((vcount>=0)&&(vcount<628)))
+     else $error("Error: vcount is not in the range [0,628]: %d", vcount);
 
-    assert property (@(posedge clk) disable iff (rst) ((vcount >= 0) && (vcount < VER_TOTAL_TIME)))
-    else $error("Error: vcount is not in the range [0, %d]: %d", VER_TOTAL_TIME-1, vcount);
+     //Hblnk and vblnk range
+     assert property (@(posedge hblnk) ##1 (hcount == HOR_BLANK_START-1))
+     else $error("Error: hblnk dont start when hcount = 799: %d", hcount);
+ 
+     assert property (@(negedge hblnk) ##1 (hcount == HOR_BLANK_END -1))
+     else $error("Error: hblnk dont stop when hcount = 1055: %d", hcount);
+ 
+     assert property (@(posedge vblnk) ##1 (vcount == VER_BLANK_START -1))
+     else $error("Error: vblnk dont start when vcount = 599: %d", vcount);
+ 
+     assert property (@(negedge vblnk) ##1 (vcount == VER_BLANK_END - 1))
+     else $error("Error: vblnk dont stop when vcount = 627: %d", vcount);
 
-    //Hblnk start and stop
-    assert property (@(posedge hblnk)  (hcount == HOR_BLANK_START - 1))
-    else $error("Error: hblnk should start when hcount = %d, hcount = %d", HOR_BLANK_START, hcount);
-
-    assert property (@(negedge hblnk) (hcount == HOR_BLANK_END - 1))
-    else $error("Error: hblnk should stop when hcount = %d, hcount = %d", HOR_BLANK_END, hcount);
-
-    //Hsync start and stop
-    assert property (@(posedge hsync) (hcount == HOR_SYNC_START - 1))
-    else $error("Error: hsync should start when hcount = %d, hcount = %d", HOR_SYNC_START, hcount);
-
-    assert property (@(negedge hsync) (hcount == HOR_SYNC_END - 1))
-    else $error("Error: hsync should stop when hcount = %d, hcount = %d", HOR_SYNC_END, hcount);
-
-    //Vblnk start and stop
-    assert property (@(posedge vblnk)  (vcount == VER_BLANK_START))
-    else $error("Error: vblnk should start when vcount = %d, vcount = %d", VER_BLANK_START, vcount);
-
-    assert property (@(negedge vblnk) (vcount == VER_BLANK_END - 1))
-    else $error("Error: vblnk should stop when vcount = %d, vcount = %d", VER_BLANK_END, vcount);
-
-    //Vsync start and stop
-    assert property (@(posedge vsync) (vcount == VER_SYNC_START - 1))
-    else $error("Error: vsync should start when vcount = %d, vcount = %d", VER_SYNC_START, vcount);
-
-    assert property (@(negedge vsync)  (vcount == VER_SYNC_END - 1))
-    else $error("Error: vsync should stop when vcount = %d, vcount = %d", VER_SYNC_END, vcount);
-
+     //Hsync and vsync range
+     assert property (@(posedge hsync) ##1 (hcount == HOR_SYNC_START-1))
+     else $error("Error: hsync dont start when hcount = 839: %d", hcount);
+ 
+     assert property (@(negedge hsync) ##1 (hcount == HOR_SYNC_END -1))
+     else $error("Error: hsync dont stop when hcount = 967: %d", hcount);
+ 
+     assert property (@(posedge vsync) ##1 (vcount == VER_SYNC_START-1))
+     else $error("Error: vsync dont start when vcount = 600: %d", vcount);
+ 
+     assert property (@(negedge vsync) ##1 (vcount == VER_SYNC_END -1))
+     else $error("Error: vsync dont stop when vcount = 604: %d", vcount);
     /**
      * Main test
      */
