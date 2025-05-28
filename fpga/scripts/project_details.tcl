@@ -52,8 +52,8 @@ set sv_files {
 
 # Specify Verilog design files location         -- EDIT
  set verilog_files {
-     rtl/clk_wiz_0_clk_wiz.v
-     rtl/clk_wiz_0.v
+     rtl/clk_wiz65_clk_wiz.v
+     rtl/clk_wiz65.v
      
  }
 

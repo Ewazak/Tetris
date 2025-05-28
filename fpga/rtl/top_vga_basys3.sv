@@ -32,7 +32,8 @@ timeprecision 1ps;
  */
 
 logic clk100MHz;
-logic clk40MHz;
+// logic clk40MHz;
+logic clk65MHz;
 logic locked;
 logic pclk_mirror;
 
@@ -54,19 +55,27 @@ assign JA1 = pclk_mirror;
  */
 
 
- clk_wiz_0 u_clk_wiz_0(
+//  clk_wiz_0 u_clk_wiz_0(
+//     .clk(clk),
+//     .clk100MHz(clk100MHz),
+//     // .clk40MHz(clk40MHz),
+//     .locked(locked)
+//  );
+
+ clk_wiz65 u_clk_wiz65(
     .clk(clk),
     .clk100MHz(clk100MHz),
-    .clk40MHz(clk40MHz),
+    .clk65MHz(clk65MHz),
     .locked(locked)
  );
+
 
 // Mirror pclk on a pin for use by the testbench;
 // not functionally required for this design to work.
 
 ODDR pclk_oddr (
     .Q(pclk_mirror),
-    .C(clk40MHz),
+    .C(clk65MHz),
     .CE(1'b1),
     .D1(1'b1),
     .D2(1'b0),
@@ -80,8 +89,7 @@ ODDR pclk_oddr (
  */
 
 top_vga u_top_vga (
-    .clk(clk40MHz),
-    // .clk50Hz(clk50Hz),
+    .clk65MHz(clk65MHz),
     .rst(btnC),
     .r(vgaRed),
     .g(vgaGreen),
