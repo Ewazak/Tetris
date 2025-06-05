@@ -19,7 +19,7 @@ module vga_timing_tb;
      *  Local parameters
      */
 
-    localparam CLK_PERIOD = 25;     // 40 MHz
+    localparam CLK_PERIOD = 15.385;     // 65 MHz
 
 
     /**
@@ -82,10 +82,10 @@ module vga_timing_tb;
      * Assertions
      */
     //Hcount and vcount range
-     assert property (@(posedge clk) disable iff (rst) ##1 ((hcount>=0)&&(hcount<1056)))
+     assert property (@(posedge clk) disable iff (rst) ##1 ((hcount>=0)&&(hcount<1344)))
      else $error("Error: hcount is not in the range [0,1055]: %d", hcount);
  
-     assert property (@(posedge clk) disable iff (rst) ##1 ((vcount>=0)&&(vcount<628)))
+     assert property (@(posedge clk) disable iff (rst) ##1 ((vcount>=0)&&(vcount<806)))
      else $error("Error: vcount is not in the range [0,628]: %d", vcount);
 
      //Hblnk and vblnk range

@@ -18,46 +18,50 @@
     output logic hblnk
 );
 
-timeunit 1ns;
-timeprecision 1ps;
+    timeunit 1ns;
+    timeprecision 1ps;
 
-import vga_pkg::*;
-//Horizontal
-always_ff @(posedge clk) begin
-    if (rst == 1'b1) begin
-        hcount <= '0;
-        hblnk  <= '0;
-        hsync  <= '0;
-    end else begin
-        if (hcount == HOR_TOTAL_TIME -1) begin
-            hcount <= '0;
+    import vga_pkg::*;
+
+    // Horizontal timing
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            hcount <= 0;
+            hblnk  <= 0;
+            hsync  <= 1;
         end else begin
-            hcount <= hcount + 1;
-        end
-        hblnk <= (hcount >= HOR_BLANK_START-1) && (hcount < HOR_BLANK_END-1);
-        hsync <= (hcount >= HOR_SYNC_START-1) && (hcount < HOR_SYNC_END-1);
-    end
-end
-//Vertical
-always_ff @(posedge clk) begin
-    if (rst == 1'b1) begin
-        vcount <= '0;
-        vblnk  <= '0;
-        vsync  <= '0;
-    end else begin
-        if (hcount == HOR_TOTAL_TIME -1) begin
-            if (vcount == VER_TOTAL_TIME -1) begin
-                vcount <= '0;
-            end else begin
-                vcount <= vcount + 1;
-            end
-        end
-        vblnk <= (vcount >= VER_BLANK_START) && (vcount < VER_BLANK_END);
-        vsync <= (vcount >= VER_SYNC_START) && (vcount < VER_SYNC_END);
-    end
-end
-endmodule
+            if (hcount == HOR_TOTAL_TIME - 1)
+                hcount <= 0;
+            else
+                hcount <= hcount + 1;
 
+            hblnk <= (hcount >= HOR_BLANK_START);
+            hsync <= ~((hcount >= HOR_SYNC_START) &&
+                       (hcount < HOR_SYNC_END));
+        end
+    end
+
+    // Vertical timing
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            vcount <= 0;
+            vblnk  <= 0;
+            vsync  <= 1;
+        end else begin
+            if (hcount == HOR_TOTAL_TIME - 1) begin
+                if (vcount == VER_TOTAL_TIME - 1)
+                    vcount <= 0;
+                else
+                    vcount <= vcount + 1;
+            end
+
+            vblnk <= (vcount >= VER_BLANK_START);
+            vsync <= ~((vcount >= VER_SYNC_START) &&
+                       (vcount < VER_SYNC_END));
+        end
+    end
+
+endmodule
 
 
       
