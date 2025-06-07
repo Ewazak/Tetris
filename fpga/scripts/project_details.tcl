@@ -35,18 +35,11 @@ set xdc_files {
 set sv_files {
     ../rtl/vga_pkg.sv
     ../rtl/vga_timing.sv
-    ../rtl/draw_bg.sv
+    ../rtl/draw_start_screen_rom.sv
+    ../rtl/game_controller.sv
     ../rtl/vga_if.sv
-    ../rtl/draw_rect.sv
-    ../rtl/draw_mouse.sv
     ../rtl/top_vga.sv
-    ../rtl/bufor_tim.sv
-    ../rtl/image_rom.sv
-    ../rtl/draw_rect_ctl.sv
     ../rtl/font_rom.sv
-    ../rtl/draw_rect_char.sv
-    ../rtl/char_rom.sv
-    ../rtl/delay.sv
     rtl/top_vga_basys3.sv
 }
 
@@ -66,5 +59,5 @@ set sv_files {
 
 # Specify files for a memory initialization     -- EDIT
  set mem_files {
-    ../rtl/rect/image_rom.data
+    ../rtl/start_screen.data
  }

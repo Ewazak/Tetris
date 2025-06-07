@@ -14,7 +14,7 @@
 
  module top_vga (
     input  logic clk,
-    input logic clk100MHz,
+    input  logic clk100MHz,
     input  logic rst,
     output logic vs,
     output logic hs,
@@ -22,46 +22,34 @@
     output logic [3:0] g,
     output logic [3:0] b,
 
-    inout   ps2_clk,
-    inout   ps2_data
+    inout  ps2_clk,
+    inout  ps2_data,
+    input  logic enter_pressed,       // dodane wejście do FSM
+    input  logic game_over_flag       // dodane wejście do FSM
 );
 
     timeunit 1ns;
     timeprecision 1ps;
 
-    vga_if draw_rect();
-    vga_if draw_bg();
-    vga_if draw_mouse();
-    vga_if draw_rect_char();
-    vga_if draw_rect_char_2();
+    // VGA sygnały pośrednie
+    vga_if vga_start_screen_rom();
+    vga_if vga_game();
+    vga_if vga_final();
 
     logic [11:0] xpos, ypos;
     logic [11:0] xpos_bufor, ypos_bufor;
     logic left, right, middle;
-    logic [11:0] rgb_pixel;
-    logic [11:0] pixel_addr;
-    logic [11:0] address;
-    logic [11:0] rgb;
-    logic [11:0] xpos_ctl, ypos_ctl;
-    logic [10:0] addr;
-    logic [10:0] addr_2;
-    logic [7:0] char_line_pixels;
-    logic [7:0] char_line_pixels_2;
-    logic [3:0] char_line;
-    logic [3:0] char_line_2;
-    logic [6:0] char_code;
-    logic [6:0] char_code_2;
-    logic [7:0] char_xy;
-    logic [7:0] char_xy_2;
 
     wire [10:0] vcount_tim, hcount_tim;
-    wire vsync_tim, hsync_tim;
-    wire vblnk_tim, hblnk_tim;
+    wire        vsync_tim, hsync_tim;
+    wire        vblnk_tim, hblnk_tim;
 
-    assign vs = draw_mouse.vsync;
-    assign hs = draw_mouse.hsync;
-    assign {r, g, b} = draw_mouse.rgb;
+    // FSM sygnały stanu
+    logic in_game, in_start_screen, in_game_over;
 
+    // -----------------------------
+    // GENERATOR SYGNAŁÓW VGA
+    // -----------------------------
     vga_timing u_vga_timing (
         .clk(clk),
         .rst(rst),
@@ -73,7 +61,10 @@
         .hblnk(hblnk_tim)
     );
 
-    draw_bg u_draw_bg (
+    // -----------------------------
+    // EKRAN STARTOWY
+    // -----------------------------
+    draw_start_screen_rom u_draw_start_screen (
         .clk(clk),
         .rst(rst),
         .vcount_in(vcount_tim),
@@ -82,63 +73,42 @@
         .hcount_in(hcount_tim),
         .hsync_in(hsync_tim),
         .hblnk_in(hblnk_tim),
-        .out(draw_bg)
+        .in(vga_start_screen_rom), // nie używany (można usunąć z interfejsu jeśli niepotrzebny)
+        .out(vga_start_screen_rom)
     );
 
-    draw_rect u_draw_rect (
+    // -----------------------------
+    // STEROWANIE STANEM GRY
+    // -----------------------------
+    game_controller u_game_controller (
         .clk(clk),
         .rst(rst),
-        .xpos(xpos_ctl),
-        .ypos(ypos_ctl),
-        .in(draw_rect_char_2),
-        .out(draw_rect),
-        .rgb_pixel(rgb),
-        .pixel_addr(pixel_addr)
+        .enter_pressed(enter_pressed),
+        .game_over_flag(game_over_flag),
+        .in_game(in_game),
+        .in_start_screen(in_start_screen),
+        .in_game_over(in_game_over)
     );
 
-    draw_rect_char #(
-        .CHAR_X(70),
-        .CHAR_Y(70)
-    ) u_draw_rect_char (
-        .clk(clk),
-        .rst(rst),
-        .char_line_pixels(char_line_pixels),
-        .char_xy(char_xy),
-        .char_line(char_line),
-        .in(draw_bg),
-        .out(draw_rect_char)
-    );
+    // -----------------------------
+    // MULTIPLEXING OBRAZU
+    // -----------------------------
+    assign vga_final.vcount = in_start_screen ? vga_start_screen_rom.vcount : vga_game.vcount;
+    assign vga_final.vsync  = in_start_screen ? vga_start_screen_rom.vsync  : vga_game.vsync;
+    assign vga_final.vblnk  = in_start_screen ? vga_start_screen_rom.vblnk  : vga_game.vblnk;
+    assign vga_final.hcount = in_start_screen ? vga_start_screen_rom.hcount : vga_game.hcount;
+    assign vga_final.hsync  = in_start_screen ? vga_start_screen_rom.hsync  : vga_game.hsync;
+    assign vga_final.hblnk  = in_start_screen ? vga_start_screen_rom.hblnk  : vga_game.hblnk;
+    assign vga_final.rgb    = in_start_screen ? vga_start_screen_rom.rgb    : vga_game.rgb;
 
-     draw_rect_char #(
-        .CHAR_X(350),
-        .CHAR_Y(350)
-    ) u_draw_rect_char_2 (
-        .clk(clk),
-        .rst(rst),
-        .char_line_pixels(char_line_pixels_2),
-        .char_xy(char_xy_2),
-        .char_line(char_line_2),
-        .in(draw_rect_char),
-        .out(draw_rect_char_2)
-    );
+    // Wyjście na monitor
+    assign vs = vga_final.vsync;
+    assign hs = vga_final.hsync;
+    assign {r, g, b} = vga_final.rgb;
 
-    draw_mouse u_draw_mouse (
-        .clk(clk),
-        .xpos(xpos_bufor),
-        .ypos(ypos_bufor),
-        .in(draw_rect),
-        .out(draw_mouse),
-        .rst(rst)
-    );
-
-    bufor_tim u_bufor_tim (
-        .clk(clk),
-        .rst(rst),
-        .xpos(xpos),
-        .ypos(ypos),
-        .xpos_bufor(xpos_bufor),
-        .ypos_bufor(ypos_bufor)
-    );
+    // -----------------------------
+    // MYSZ
+    // -----------------------------
 
     MouseCtl u_MouseCtl (
         .clk(clk100MHz),
@@ -158,48 +128,5 @@
         .new_event(),
         .zpos()
     );
-
-    image_rom u_image_rom (
-        .clk(clk),
-        .address(pixel_addr),
-        .rgb(rgb)
-    );
-
-    draw_rect_ctl u_draw_rect_ctl (
-        .clk(clk),
-        .rst(rst),
-        .xpos(xpos_ctl),
-        .ypos(ypos_ctl),
-        .mouse_xpos(xpos),
-        .mouse_ypos(ypos),
-        .mouse_left(left)
-    );
-
-    font_rom u_font_rom(
-        .clk(clk),
-        .addr(addr),
-        .char_line_pixels(char_line_pixels)
-    );
-
-     font_rom u_font_rom_2(
-        .clk(clk),
-        .addr(addr_2),
-        .char_line_pixels(char_line_pixels_2)
-    );
-
-    char_rom u_char_rom(
-        .clk(clk),
-        .char_xy(char_xy),
-        .char_code(char_code)
-    );
-
-    char_rom u_char_rom_2(
-        .clk(clk),
-        .char_xy(char_xy_2),
-        .char_code(char_code_2)
-    );
-
-    assign addr = {char_code, char_line};
-    assign addr_2 = {char_code_2, char_line_2};
 
 endmodule
