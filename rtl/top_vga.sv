@@ -129,4 +129,28 @@
         .zpos()
     );
 
+    logic [2:0] current_block_type;
+logic load_new_block;
+
+// instancja generatora
+block_randomizer u_block_randomizer (
+    .clk(clk),
+    .rst(rst),
+    .load_new(load_new_block),
+    .block_type(current_block_type)
+);
+
+// Przykładowe wartości do modułu block
+logic [1:0] rotation;
+logic [1:0] x_in, y_in;
+logic occupied_pixel;
+
+block u_block (
+    .block_type(current_block_type),
+    .rotation(rotation),
+    .x(x_in),
+    .y(y_in),
+    .occupied(occupied_pixel)
+);
+
 endmodule

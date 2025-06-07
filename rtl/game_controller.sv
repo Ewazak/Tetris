@@ -3,17 +3,16 @@ module game_controller (
     input  logic rst,
     input  logic enter_pressed,
     input  logic game_over_flag,
+    input  logic block_placed,        // nowy sygnał: klocek ułożony
     output logic in_game,
     output logic in_start_screen,
-    output logic in_game_over
+    output logic in_game_over,
+    output logic load_new_block        // nowy sygnał do generatora klocków
 );
 
     timeunit 1ns;
     timeprecision 1ps;
 
-    /**
-     * Type declarations
-     */
     typedef enum logic [1:0] {
         START_SCREEN = 2'b00,
         PLAYING      = 2'b01,
@@ -22,9 +21,7 @@ module game_controller (
 
     state_t current_state, next_state;
 
-    /**
-     * State register
-     */
+    // Rejestr stanu
     always_ff @(posedge clk or posedge rst) begin : fsm_ff_blk
         if (rst)
             current_state <= START_SCREEN;
@@ -32,9 +29,7 @@ module game_controller (
             current_state <= next_state;
     end
 
-    /**
-     * Next-state logic
-     */
+    // Logika przejść
     always_comb begin : fsm_comb_blk
         next_state = current_state;
 
@@ -53,14 +48,28 @@ module game_controller (
         endcase
     end
 
-    /**
-     * Output logic
-     */
+    // Wyjścia stanu
     assign in_start_screen = (current_state == START_SCREEN);
     assign in_game         = (current_state == PLAYING);
     assign in_game_over    = (current_state == GAME_OVER);
 
+    // Generowanie impulsy load_new_block (1 takt na zmianę stanu lub block_placed)
+    logic prev_playing;
+
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) begin
+            load_new_block <= 1'b0;
+            prev_playing <= 1'b0;
+        end else begin
+            // detekcja momentu wejścia do PLAYING
+            prev_playing <= (current_state == PLAYING);
+
+            if ((current_state == PLAYING && !prev_playing) ||  // wejście do PLAYING
+                (current_state == PLAYING && block_placed))      // klocek ułożony w trakcie gry
+                load_new_block <= 1'b1;
+            else
+                load_new_block <= 1'b0;
+        end
+    end
+
 endmodule
-
-
-

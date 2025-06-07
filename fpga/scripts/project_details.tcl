@@ -40,6 +40,8 @@ set sv_files {
     ../rtl/vga_if.sv
     ../rtl/top_vga.sv
     ../rtl/font_rom.sv
+    ../rtl/block.sv
+    ../rtl/block_randomizer.sv
     rtl/top_vga_basys3.sv
 }
 
