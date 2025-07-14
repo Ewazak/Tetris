@@ -33,7 +33,7 @@ draw_rect_ctl u_draw_rect_ctl(
 
 initial begin
     $dumpfile ("draw_rect_ctl.vcd");
-    $dumpvars (0, draw_rect_ctl_tb)
+    $dumpvars (0, draw_rect_ctl_tb);
     $fmonitor("bouncing_gravity.csv", "%t, %d", $time, ypos);  
 // End the simulation.
     $display("Simulation is over, check the waveforms.");

@@ -73,7 +73,6 @@
         .hcount_in(hcount_tim),
         .hsync_in(hsync_tim),
         .hblnk_in(hblnk_tim),
-        .in(vga_start_screen_rom), // nie używany (można usunąć z interfejsu jeśli niepotrzebny)
         .out(vga_start_screen_rom)
     );
 
@@ -85,9 +84,11 @@
         .rst(rst),
         .enter_pressed(enter_pressed),
         .game_over_flag(game_over_flag),
+        .block_placed(block_placed),
         .in_game(in_game),
         .in_start_screen(in_start_screen),
-        .in_game_over(in_game_over)
+        .in_game_over(in_game_over),
+        .load_new_block(load_new_block)
     );
 
     // -----------------------------
@@ -129,8 +130,7 @@
         .zpos()
     );
 
-    logic [2:0] current_block_type;
-logic load_new_block;
+logic [2:0] current_block_type;
 
 // instancja generatora
 block_randomizer u_block_randomizer (

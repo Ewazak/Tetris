@@ -89,13 +89,15 @@ ODDR pclk_oddr (
  */
 
 top_vga u_top_vga (
-    .clk65MHz(clk65MHz),
+    .clk(clk65MHz),
     .rst(btnC),
     .r(vgaRed),
     .g(vgaGreen),
     .b(vgaBlue),
     .hs(Hsync),
     .vs(Vsync),
+    .enter_pressed(enter_pressed_signal),
+    .game_over_flag(game_over_signal),
     .ps2_clk(PS2Clk),
     .ps2_data(PS2Data),
     .clk100MHz(clk100MHz)

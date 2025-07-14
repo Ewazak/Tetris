@@ -7,7 +7,6 @@ module draw_start_screen_rom (
     input  logic [10:0] hcount_in,
     input  logic        hsync_in,
     input  logic        hblnk_in,
-    vga_if.in           in,
     vga_if.out          out
 );
 
@@ -27,7 +26,7 @@ module draw_start_screen_rom (
 
     // ROM containing image data (from start_screen.data)
     logic [11:0] rom [0:8191];
-    initial $readmemh("start_screen.data", rom);
+    initial $readmemh("start_screen.dat", rom);
 
     always_ff @(posedge clk) begin : reg_out
         if (rst) begin
