@@ -26,7 +26,7 @@ module draw_start_screen_rom (
 
     // ROM containing image data (from start_screen.data)
     logic [11:0] rom [0:8191];
-    initial $readmemh("start_screen.dat", rom);
+    initial $readmemh("/rtl/start_screen.dat", rom);
 
     always_ff @(posedge clk) begin : reg_out
         if (rst) begin
@@ -56,7 +56,7 @@ module draw_start_screen_rom (
             pixel_addr = (vcount_in - YPOS) * IMAGE_WIDTH + (hcount_in - XPOS);
             rgb_nxt = rom[pixel_addr];
         end else
-            rgb_nxt = 12'h111; // background
+            rgb_nxt = 12'hF000; // background
     end
 
 endmodule
