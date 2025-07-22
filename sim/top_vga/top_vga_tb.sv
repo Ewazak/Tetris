@@ -65,7 +65,6 @@ module top_vga_tb;
     top_vga dut (
         .clk(clk),
         .clk100MHz(clk100MHz),
-        // .clk50Hz(clk50Hz),
         .rst(rst),
         .vs(vs),
         .hs(hs),
@@ -77,8 +76,8 @@ module top_vga_tb;
     );
 
     tiff_writer #(
-        .XDIM(16'd1056),
-        .YDIM(16'd628),
+        .XDIM(16'd1344),
+        .YDIM(16'd806),
         .FILE_DIR("../../results")
     ) u_tiff_writer (
         .clk(clk),

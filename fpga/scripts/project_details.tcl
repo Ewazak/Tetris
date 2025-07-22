@@ -61,5 +61,5 @@ set sv_files {
 
 # Specify files for a memory initialization     -- EDIT
  set mem_files {
-    ../rtl/start_screen.dat
+    ../rtl/screen/start_screen.dat
  }

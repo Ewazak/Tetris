@@ -25,7 +25,7 @@ module draw_start_screen_rom (
 
     // ROM containing image data (from start_screen.data)
     logic [11:0] rom [0:8191];
-    initial $readmemh("../rtl/start_screen.dat", rom);
+    initial $readmemh("../rtl/screen/start_screen.dat", rom);
 
     // Pipeline 1 - oblicz adres
     always_ff @(posedge clk or posedge rst) begin
@@ -109,3 +109,6 @@ module draw_start_screen_rom (
         end
     end
 endmodule
+
+    
+
