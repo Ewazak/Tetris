@@ -33,15 +33,18 @@ set xdc_files {
 
 # Specify SystemVerilog design files location   -- EDIT
 set sv_files {
-    ../rtl/vga_pkg.sv
-    ../rtl/vga_timing.sv
-    ../rtl/draw_start_screen_rom.sv
+    ../rtl/timing/vga_pkg.sv
+    ../rtl/timing//vga_timing.sv
+    ../rtl/screen/draw_start_screen_rom.sv
     ../rtl/game_controller.sv
     ../rtl/vga_if.sv
     ../rtl/top_vga.sv
     ../rtl/font_rom.sv
-    ../rtl/block.sv
-    ../rtl/block_randomizer.sv
+    ../rtl/blocks/block_generator.sv
+    ../rtl/blocks/block_randomizer.sv
+    ../rtl/blocks/block_draw.sv
+    ../rtl/blocks/board_renderer.sv
+    ../rtl/game_logic.sv
     rtl/top_vga_basys3.sv
 }
 
@@ -49,6 +52,11 @@ set sv_files {
  set verilog_files {
      rtl/clk_wiz65_clk_wiz.v
      rtl/clk_wiz65.v
+     rtl/uart/fifo.v 
+     rtl/uart/mod_m_counter.v 
+     rtl/uart/uart_rx.v 
+     rtl/uart/uart_tx.v 
+     rtl/uart/uart.v 
      
  }
 
