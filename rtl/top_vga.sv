@@ -85,7 +85,9 @@
     // ---------------------------------------
     // Start screen
     // ---------------------------------------
-    draw_start_screen_rom u_draw_start_screen (
+    draw_start_screen #(
+    .SCALE(8)
+    )u_draw_start_screen (
         .clk(clk),
         .rst(rst),
         .vcount_in(vcount_tim),
@@ -96,7 +98,6 @@
         .hblnk_in(hblnk_tim),
         .out(vga_start_screen_rom)
     );
-
     // ---------------------------------------
     // FSM kontroler gry
     // ---------------------------------------

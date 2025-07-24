@@ -11,7 +11,8 @@
 
 sv work ../../rtl/timing/vga_pkg.sv \
         ../../rtl/timing/vga_timing.sv \
-        ../../rtl/screen/draw_start_screen_rom.sv \
+        ../../rtl/screen/draw_start_screen.sv \
+        ../../rtl/screen/start_screen_rom.sv \
         ../../rtl/game_controller.sv \
         ../../rtl/vga_if.sv \
         ../../rtl/top_vga.sv \
@@ -33,7 +34,6 @@ verilog work ../common/glbl.v \
 vhdl work ../../fpga/rtl/MouseCtl.vhd \
           ../../fpga/rtl/Ps2Interface.vhd \
           ../../fpga/rtl/MouseDisplay.vhd \
-
 
 
 

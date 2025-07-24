@@ -35,7 +35,8 @@ set xdc_files {
 set sv_files {
     ../rtl/timing/vga_pkg.sv
     ../rtl/timing//vga_timing.sv
-    ../rtl/screen/draw_start_screen_rom.sv
+    ../rtl/start_screen/draw_start_screen.sv
+    ../rtl/start_screen/start_screen_rom.sv
     ../rtl/game_controller.sv
     ../rtl/vga_if.sv
     ../rtl/top_vga.sv
@@ -52,11 +53,11 @@ set sv_files {
  set verilog_files {
      rtl/clk_wiz65_clk_wiz.v
      rtl/clk_wiz65.v
-     rtl/uart/fifo.v 
-     rtl/uart/mod_m_counter.v 
-     rtl/uart/uart_rx.v 
-     rtl/uart/uart_tx.v 
-     rtl/uart/uart.v 
+     ../rtl/uart/fifo.v 
+     ../rtl/uart/mod_m_counter.v 
+     ../rtl/uart/uart_rx.v 
+     ../rtl/uart/uart_tx.v 
+     ../rtl/uart/uart.v 
      
  }
 
@@ -69,5 +70,5 @@ set sv_files {
 
 # Specify files for a memory initialization     -- EDIT
  set mem_files {
-    ../rtl/screen/start_screen.dat
+    ../rtl/start_screen/start_screen.dat
  }
