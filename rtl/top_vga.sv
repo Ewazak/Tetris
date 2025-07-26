@@ -16,11 +16,13 @@
     input  logic clk,
     input  logic clk100MHz,
     input  logic rst,
+    input  logic rx,
     output logic vs,
     output logic hs,
     output logic [3:0] r,
     output logic [3:0] g,
     output logic [3:0] b,
+    output logic tx,
 
     inout  ps2_clk,
     inout  ps2_data,
@@ -68,6 +70,8 @@
     // Wybrany kolor końcowy
     logic [11:0] final_rgb;
 
+    logic [7:0] uart_data_send, uart_data_recieved;
+
     // ---------------------------------------
     // VGA timing
     // ---------------------------------------
@@ -107,7 +111,7 @@
     game_controller u_game_controller (
         .clk(clk),
         .rst(rst),
-        .enter_pressed(enter_pressed),
+        .enter_pressed(kb_start),
         .game_over_flag(game_over_flag),
         .block_placed(block_placed),
         .in_game(in_game),
@@ -189,6 +193,30 @@
         .block_placed(block_placed),
         .board(board)
     );
+
+    logic kb_left, kb_right, kb_down, kb_rotate, kb_start;
+
+    keyboard_ctl u_keyboard_ctl (
+        .clk(clk),
+        .rst(rst),
+        .ps2_data(ps2_data),     // Zwykle `ps2_data` jako inout podpinamy tylko 1-bit
+        .ps2_data_ready(/* TODO:sygnał gotowości danych z dekodera */),
+
+        .left(kb_left),
+        .right(kb_right),
+        .down(kb_down),
+        .rotate(kb_rotate),
+        .start(kb_start)           // <- ENTER z klawiatury
+    );
+
+    top_uart u_top_uart (
+        .clk(clk65),
+        .rst(rst),
+        .rx,
+        .uart_data_send(uart_data_send),
+        .uart_data_recieved(uart_data_recieved),
+        .tx
+     );
 
     // ---------------------------------------
     // MUX: co pokazywać

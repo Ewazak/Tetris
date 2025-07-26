@@ -46,6 +46,8 @@ set sv_files {
     ../rtl/blocks/block_draw.sv
     ../rtl/blocks/board_renderer.sv
     ../rtl/game_logic.sv
+    ../rtl/keyboard_ctl.sv
+    ../rtl/top_uart.sv 
     rtl/top_vga_basys3.sv
 }
 

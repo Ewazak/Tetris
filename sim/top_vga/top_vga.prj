@@ -11,7 +11,8 @@
 
 sv work ../../rtl/timing/vga_pkg.sv \
         ../../rtl/timing/vga_timing.sv \
-        ../../rtl/screen/draw_start_screen_rom.sv \
+        ../../rtl/start_screen/draw_start_screen_rom.sv \
+        ../../rtl/start_screen/start_screen_rom.sv \
         ../../rtl/game_controller.sv \
         ../../rtl/vga_if.sv \
         ../../fpga/rtl/top_vga_basys3.sv \
@@ -22,6 +23,8 @@ sv work ../../rtl/timing/vga_pkg.sv \
         ../../rtl/blocks/block_draw.sv \
         ../../rtl/blocks/board_renderer.sv \
         ../../rtl/game_logic.sv \
+        ../../rtl/keyboard_ctl.sv \
+        ../../rtl/top_uart.sv \
         ../common/tiff_writer.sv \
         top_vga_tb.sv 
 
