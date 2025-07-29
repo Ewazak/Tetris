@@ -37,6 +37,8 @@ set sv_files {
     ../rtl/timing//vga_timing.sv
     ../rtl/start_screen/draw_start_screen.sv
     ../rtl/start_screen/start_screen_rom.sv
+    ../rtl/game_screen/draw_game_screen.sv
+    ../rtl/game_screen/game_screen_rom.sv
     ../rtl/game_controller.sv
     ../rtl/vga_if.sv
     ../rtl/top_vga.sv
@@ -46,7 +48,6 @@ set sv_files {
     ../rtl/blocks/block_draw.sv
     ../rtl/blocks/board_renderer.sv
     ../rtl/game_logic.sv
-    ../rtl/keyboard_ctl.sv
     ../rtl/top_uart.sv 
     rtl/top_vga_basys3.sv
 }
@@ -65,12 +66,12 @@ set sv_files {
 
 # Specify VHDL design files location            -- EDIT
  set vhdl_files {
-    rtl/MouseCtl.vhd
-    rtl/Ps2Interface.vhd
-    rtl/MouseDisplay.vhd
+    rtl/Keyboard/debounce.vhd
+    rtl/Keyboard/ps2_keyboard.vhd
  }
 
 # Specify files for a memory initialization     -- EDIT
  set mem_files {
     ../rtl/start_screen/start_screen.dat
+    ../rtl/game_screen/game_screen.dat
  }

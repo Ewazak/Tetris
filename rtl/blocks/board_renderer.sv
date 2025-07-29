@@ -38,7 +38,7 @@ module board_renderer (
                 endcase
             end
             else begin
-                rgb_out = 12'h000; // tło planszy (czarne)
+                rgb_out = 12'hAAA; // jasnoszare tło planszy
             end
         end
     end

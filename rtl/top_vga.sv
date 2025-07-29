@@ -24,8 +24,8 @@
     output logic [3:0] b,
     output logic tx,
 
-    inout  ps2_clk,
-    inout  ps2_data,
+    input  ps2_clk,
+    input  ps2_data,
     input  logic enter_pressed,
     input  logic game_over_flag
 );
@@ -105,13 +105,28 @@
     // ---------------------------------------
     // FSM kontroler gry
     // ---------------------------------------
+    
+    // Wykrywanie impulsu ENTER (zbocze narastające)
+    logic kb_left, kb_right, kb_down, kb_rotate, kb_start;
+    logic kb_start_prev, kb_start_edge;
+
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) begin
+            kb_start_prev <= 0;
+            kb_start_edge <= 0;
+        end else begin
+            kb_start_edge <= kb_start & ~kb_start_prev;  // tylko zbocze narastające
+            kb_start_prev <= kb_start;
+        end
+    end
+
     logic block_placed;
     logic load_new_block;
-
+    
     game_controller u_game_controller (
         .clk(clk),
         .rst(rst),
-        .enter_pressed(kb_start),
+        .enter_pressed(kb_start_edge),
         .game_over_flag(game_over_flag),
         .block_placed(block_placed),
         .in_game(in_game),
@@ -121,25 +136,67 @@
     );
 
     // ---------------------------------------
-    // Obsługa myszy
+    // Obsługa klawiatury
     // ---------------------------------------
-    MouseCtl u_MouseCtl (
-        .clk(clk100MHz),
+    
+        // Sygnały wejściowe z ps2_keyboard
+        logic        ps2_code_new;
+        logic [7:0]  ps2_code;
+        
+        ps2_keyboard #(
+        .clk_freq(65_000_000),
+        .debounce_counter_size(8)
+    ) ps2_keyboard_inst (
+        .clk(clk),
         .ps2_clk(ps2_clk),
         .ps2_data(ps2_data),
-        .xpos(xpos),
-        .ypos(ypos),
-        .left(left),
-        .right(right),
-        .middle(middle),
+        .ps2_code_new(ps2_code_new),
+        .ps2_code(ps2_code)
+    );
+
+        // Flaga break code
+        logic is_break;
+        
+        always_ff @(posedge clk or posedge rst) begin
+            if (rst) begin
+                kb_left   <= 0;
+                kb_right  <= 0;
+                kb_down   <= 0;
+                kb_rotate <= 0;
+                kb_start  <= 0;
+                is_break  <= 0;
+            end else if (ps2_code_new) begin
+                if (ps2_code == 8'hF0) begin
+                    is_break <= 1;  // następny kod to break
+                end else begin
+                    case (ps2_code)
+                        8'h1C: kb_left   <= ~is_break;  // A
+                        8'h23: kb_right  <= ~is_break;  // D
+                        8'h1B: kb_down   <= ~is_break;  // S
+                        8'h1D: kb_rotate <= ~is_break;  // W
+                        8'h5A: kb_start  <= ~is_break;  // ENTER
+                        default: ; // brak działania
+                    endcase
+                    is_break <= 0; // reset break
+                end
+            end
+        end
+
+    // ---------------------------------------
+    // Game screen
+    // ---------------------------------------
+    draw_game_screen #(
+        .SCALE(16)
+    ) u_draw_game_screen (
+        .clk(clk),
         .rst(rst),
-        .value(),
-        .setx(),
-        .sety(),
-        .setmax_x(),
-        .setmax_y(),
-        .new_event(),
-        .zpos()
+        .vcount_in(vcount_tim),
+        .vsync_in(vsync_tim),
+        .vblnk_in(vblnk_tim),
+        .hcount_in(hcount_tim),
+        .hsync_in(hsync_tim),
+        .hblnk_in(hblnk_tim),
+        .out(vga_game)
     );
 
     // ---------------------------------------
@@ -194,21 +251,6 @@
         .board(board)
     );
 
-    logic kb_left, kb_right, kb_down, kb_rotate, kb_start;
-
-    keyboard_ctl u_keyboard_ctl (
-        .clk(clk),
-        .rst(rst),
-        .ps2_data(ps2_data),     // Zwykle `ps2_data` jako inout podpinamy tylko 1-bit
-        .ps2_data_ready(/* TODO:sygnał gotowości danych z dekodera */),
-
-        .left(kb_left),
-        .right(kb_right),
-        .down(kb_down),
-        .rotate(kb_rotate),
-        .start(kb_start)           // <- ENTER z klawiatury
-    );
-
     top_uart u_top_uart (
         .clk(clk65),
         .rst(rst),
@@ -222,11 +264,18 @@
     // MUX: co pokazywać
     // ---------------------------------------
     always_comb begin
-        if (in_start_screen)
+        if (in_start_screen) begin
             final_rgb = vga_start_screen_rom.rgb;
-        else begin
-            // Jeśli piksel należy do klocka -> pokaż klocka
-            final_rgb = (block_rgb != 12'h000) ? block_rgb : board_rgb;
+        end else if (in_game) begin
+            // Kolejność: klocek > plansza > tło z ROM-u
+            if (block_rgb != 12'h000)
+                final_rgb = block_rgb;
+            else if (board_rgb != 12'h000)
+                final_rgb = board_rgb;
+            else
+                final_rgb = vga_game.rgb;  // tło z ROM-u
+        end else begin
+            final_rgb = 12'h000; // fallback na czarne
         end
     end
 

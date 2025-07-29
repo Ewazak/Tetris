@@ -20,8 +20,8 @@ module top_vga_basys3 (
     output wire [3:0] vgaGreen,
     output wire [3:0] vgaBlue,
     output logic JA1,
-    inout logic PS2Clk,
-    inout logic PS2Data
+    inout logic ps2_clk,
+    inout logic ps2_data
 );
 
 timeunit 1ns;
@@ -98,8 +98,8 @@ top_vga u_top_vga (
     .vs(Vsync),
     .enter_pressed(enter_pressed_signal),
     .game_over_flag(game_over_signal),
-    .ps2_clk(PS2Clk),
-    .ps2_data(PS2Data),
+    .ps2_clk(ps2_clk),
+    .ps2_data(ps2_data),
     .clk100MHz(clk100MHz)
 );
 
