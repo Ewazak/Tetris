@@ -48,7 +48,10 @@ set sv_files {
     ../rtl/blocks/block_draw.sv
     ../rtl/blocks/board_renderer.sv
     ../rtl/game_logic.sv
-    ../rtl/top_uart.sv 
+    ../rtl/top_uart.sv
+    rtl/Keyboard/debounce.sv
+    rtl/Keyboard/KeyboardCtl.sv
+    rtl/Keyboard/receiver.sv
     rtl/top_vga_basys3.sv
 }
 
@@ -65,10 +68,8 @@ set sv_files {
  }
 
 # Specify VHDL design files location            -- EDIT
- set vhdl_files {
-    rtl/Keyboard/debounce.vhd
-    rtl/Keyboard/ps2_keyboard.vhd
- }
+# set vhdl_files {   
+# }
 
 # Specify files for a memory initialization     -- EDIT
  set mem_files {

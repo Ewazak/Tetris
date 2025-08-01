@@ -20,8 +20,8 @@ module top_vga_basys3 (
     output wire [3:0] vgaGreen,
     output wire [3:0] vgaBlue,
     output logic JA1,
-    inout logic ps2_clk,
-    inout logic ps2_data
+    input logic ps2_clk,
+    input logic ps2_data
 );
 
 timeunit 1ns;
@@ -91,16 +91,16 @@ ODDR pclk_oddr (
 top_vga u_top_vga (
     .clk(clk65MHz),
     .rst(btnC),
+    .rx(rx),
+    .tx(tx),
     .r(vgaRed),
     .g(vgaGreen),
     .b(vgaBlue),
     .hs(Hsync),
     .vs(Vsync),
-    .enter_pressed(enter_pressed_signal),
     .game_over_flag(game_over_signal),
     .ps2_clk(ps2_clk),
-    .ps2_data(ps2_data),
-    .clk100MHz(clk100MHz)
+    .ps2_data(ps2_data)
 );
 
 endmodule
