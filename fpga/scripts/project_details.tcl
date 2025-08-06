@@ -49,6 +49,7 @@ set sv_files {
     ../rtl/blocks/board_renderer.sv
     ../rtl/game_logic.sv
     ../rtl/top_uart.sv
+    ../rtl/score.sv
     rtl/Keyboard/debounce.sv
     rtl/Keyboard/KeyboardCtl.sv
     rtl/Keyboard/receiver.sv

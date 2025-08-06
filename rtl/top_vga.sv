@@ -74,7 +74,7 @@
     logic [15:0] keycode;
     logic kb_rotate, kb_down, kb_left, kb_right, kb_start;
         
-    receiver receiver_inst (
+    receiver u_receiver (
         .clk(clk),
         .ps2_clk(ps2_clk),
         .ps2_data(ps2_data),
@@ -82,7 +82,7 @@
         .oflag()
     );
     
-    KeyboardCtl keyboard_ctl_inst (
+    KeyboardCtl u_KeyboardCtl (
         .keycode(keycode),
         .kb_rotate(kb_rotate),
         .kb_down(kb_down),
