@@ -5,7 +5,7 @@ module top_uart
         input logic rx,
         input logic [7:0] uart_data_send,
 
-        output logic [7:0] uart_data_recieved,
+        output logic [7:0] uart_data_received,
         output logic tx
     );
 
@@ -30,7 +30,7 @@ module top_uart
     always_comb begin
         tx_nxt = tx_uart;
         rd_uart = !rx_empty;
-        uart_data_recieved = r_data;
+        uart_data_received = r_data;
         if(!tx_full) begin
             w_data_nxt = uart_data_send;
             wr_uart_nxt = 1'b1;

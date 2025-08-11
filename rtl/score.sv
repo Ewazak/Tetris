@@ -1,6 +1,6 @@
 module score (
-    input  logic [6:0] my_score,
-    input  logic [6:0] enemy_score,
+    input  logic [15:0] my_score,
+    input  logic [15:0] enemy_score,
     output logic [1:0] game_result  
 );
 
