@@ -8,7 +8,7 @@ module top_game (
     input  logic        rx,
     output logic        tx,
     // Flaga końca gry
-    input  logic        game_over_flag,
+    output  logic        game_over_flag,
     // Wyjścia do rysowania (np. do top_vga)
     output logic [2:0]  board   [0:199], // aktualny stan planszy
     output logic [15:0] my_score,
@@ -17,8 +17,13 @@ module top_game (
     output logic [2:0]  current_block_type,
     output logic [10:0] block_pos_x,
     output logic [10:0] block_pos_y,
+    output logic in_game,
+    output logic in_start_screen,
+    output logic in_game_over,
     output logic        block_placed
 );
+
+    import vga_pkg::*;
 
     // -----------------------------
     // Klawiatura
@@ -26,6 +31,7 @@ module top_game (
     logic [15:0] keycode;
     logic kb_rotate, kb_down, kb_left, kb_right, kb_start, kb_falling;
     logic kb_start_prev, kb_start_edge;
+    logic load_new_block;
 
     receiver u_receiver (
         .clk(clk),
@@ -57,8 +63,6 @@ module top_game (
     // -----------------------------
     // FSM gry
     // -----------------------------
-    logic in_game, in_start_screen, in_game_over, load_new_block;
-
     game_controller u_game_controller (
         .clk(clk),
         .rst(rst),
@@ -89,20 +93,63 @@ module top_game (
         .block_map(current_block_map)
     );
 
+    logic kb_rotate_prev, kb_rotate_edge;
+
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst)
+            kb_rotate_prev <= 1'b0;
+        else
+            kb_rotate_prev <= kb_rotate;
+    end
+
+    assign kb_rotate_edge = kb_rotate && !kb_rotate_prev;
+
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst)
+            rotation <= 0;
+        else if (in_game && kb_rotate_edge)
+            rotation <= (rotation + 1) % 4;
+    end
+    
     // -----------------------------
     // Logika gry
     // -----------------------------
     logic [2:0] lines_removed;
+    logic [3:0] active_x;
+    logic [4:0] active_y;
 
-    game_logic u_game_logic (
+    parameter BLOCK_SIZE = 32; // rozmiar klocka w pikselach na ekranie
+    
+    // Wymiary planszy w klockach
+    parameter BOARD_WIDTH_BLOCKS = 10;
+    parameter BOARD_HEIGHT_BLOCKS = 20;
+
+    localparam BOARD_WIDTH_PIXELS = BOARD_WIDTH_BLOCKS * BLOCK_SIZE;
+    localparam BOARD_HEIGHT_PIXELS = BOARD_HEIGHT_BLOCKS * BLOCK_SIZE;
+    localparam BOARD_X_CENTERED = (HOR_PIXELS - BOARD_WIDTH_PIXELS) / 2;
+    localparam BOARD_Y_CENTERED = (VER_PIXELS - BOARD_HEIGHT_PIXELS) / 2;
+
+    game_logic #(
+    .BOARD_X(BOARD_X_CENTERED),
+    .BOARD_Y(BOARD_Y_CENTERED),
+    .BLOCK_SIZE(BLOCK_SIZE)
+    ) u_game_logic (
         .clk(clk),
         .rst(rst),
         .load_new_block(load_new_block),
         .block_type(current_block_type),
         .block_map(current_block_map),
         .block_placed(block_placed),
+        .active_x(active_x),
+        .active_y(active_y),
+        .move_left(kb_left && in_game),
+        .move_right(kb_right && in_game),
+        .move_down(kb_down && in_game),
         .board(board),
-        .lines_removed(lines_removed)
+        .block_pos_x(block_pos_x),
+        .block_pos_y(block_pos_y),
+        .lines_removed(lines_removed),
+        .game_over_flag(game_over_flag)
     );
 
     // -----------------------------

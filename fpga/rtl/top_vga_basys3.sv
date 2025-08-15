@@ -98,7 +98,7 @@ top_vga u_top_vga (
     .b(vgaBlue),
     .hs(Hsync),
     .vs(Vsync),
-    .game_over_flag(game_over_signal),
+    .game_over_flag(game_over_flag),
     .ps2_clk(ps2_clk),
     .ps2_data(ps2_data)
 );
