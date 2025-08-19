@@ -26,7 +26,7 @@
     input  logic ps2_data,
     output logic game_over_flag
 );
-    
+
     import vga_pkg::*;
 
     // -----------------------------
@@ -39,7 +39,7 @@
     logic [10:0] block_pos_x, block_pos_y;
     logic        block_placed;
     logic in_game, in_start_screen, in_game_over;
-    
+
     top_game u_top_game (
         .clk(clk),
         .rst(rst),
@@ -80,31 +80,23 @@
     );
 
     // -----------------------------
-    // Render planszy
+    // Render planszy i klocka
     // -----------------------------
-    // Parametry VGA
-    localparam BLOCK_SIZE = 32;
+    logic [11:0] board_rgb, block_rgb, score_rgb;
+    logic is_board_pixel_drawn, is_block_pixel_drawn;
 
-    // Wymiary planszy w klockach
-    localparam BOARD_WIDTH_BLOCKS = 10;
-    localparam BOARD_HEIGHT_BLOCKS = 20;
-
-    // Obliczanie wyśrodkowanej pozycji planszy w pikselach
-    localparam BOARD_WIDTH_PIXELS = BOARD_WIDTH_BLOCKS * BLOCK_SIZE;
-    localparam BOARD_HEIGHT_PIXELS = BOARD_HEIGHT_BLOCKS * BLOCK_SIZE;
-    localparam BOARD_X_CENTERED = (HOR_PIXELS - BOARD_WIDTH_PIXELS) / 2;
-    localparam BOARD_Y_CENTERED = (VER_PIXELS - BOARD_HEIGHT_PIXELS) / 2;
-    
-    logic [11:0] board_rgb;
-    logic is_board_pixel_drawn;
     logic [3*200-1:0] board_flat;
-
     always_comb begin
         integer i;
-        for (i = 0; i < 200; i++) begin
+        for (i = 0; i < 200; i++)
             board_flat[i*3 +: 3] = board[i];
-        end
     end
+
+    localparam BLOCK_SIZE = 32;
+    localparam BOARD_WIDTH_PIXELS = 10 * BLOCK_SIZE;
+    localparam BOARD_HEIGHT_PIXELS = 20 * BLOCK_SIZE;
+    localparam BOARD_X_CENTERED = (HOR_PIXELS - BOARD_WIDTH_PIXELS)/2;
+    localparam BOARD_Y_CENTERED = (VER_PIXELS - BOARD_HEIGHT_PIXELS)/2;
 
     board_renderer #(
     .BOARD_X(BOARD_X_CENTERED),
@@ -118,11 +110,6 @@
         .rgb_out(board_rgb)
     );
 
-    // -----------------------------
-    // Render aktywnego klocka
-    // -----------------------------
-    logic [11:0] block_rgb;
-    logic is_block_pixel_drawn;
     block_draw u_block_draw (
         .hcount(hcount),
         .vcount(vcount),
@@ -153,7 +140,7 @@
     );
 
     // -----------------------------
-    // Tło gry (np. ROM z grafiką)
+    // Tło gry
     // -----------------------------
     vga_if vga_game();
     draw_game_screen #(
@@ -170,22 +157,40 @@
         .out(vga_game)
     );
 
+// -----------------------------
+// Score display
+// -----------------------------
+
+    score_display u_score_display (
+        .clk(clk),
+        .rst(rst),
+        .score(my_score),
+        .hcount(hcount),
+        .vcount(vcount),
+        .hblnk(hblnk),
+        .vblnk(vblnk),
+        .rgb_in(12'h000),
+        .rgb_out(score_rgb)
+    );
+
     // -----------------------------
     // MUX RGB
     // -----------------------------
     logic [11:0] final_rgb;
-
     always_comb begin
         if (in_start_screen) begin
             final_rgb = vga_start_screen.rgb;
         end else if (in_game) begin
-        // Kolejność: klocek > plansza > tło z ROM-u
             if (is_block_pixel_drawn)
                 final_rgb = block_rgb;
-            else if (is_block_pixel_drawn)
+            else if (is_board_pixel_drawn)
                 final_rgb = board_rgb;
             else
-            final_rgb = vga_game.rgb;  // tło z ROM-u
+                final_rgb = vga_game.rgb; // tło z ROM-u
+
+            // Wynik tylko w trakcie gry
+            if (score_rgb != 12'h000)
+                final_rgb = score_rgb;
         end else begin
             final_rgb = 12'h000; // fallback na czarne
         end

@@ -77,15 +77,17 @@ module block_generator (
                         block_map[2][0] = 1; block_map[2][1] = 1;
                     end
                     2'd1: begin
-                        block_map[1][0] = 1; block_map[1][1] = 1; block_map[1][2] = 1;
-                        block_map[2][0] = 1;
+                        block_map[0][0] = 1; block_map[0][1] = 1; block_map[0][2] = 1;
+                        block_map[1][0] = 1;
                     end
                     2'd2: begin
-                        block_map[0][1] = 1; block_map[1][1] = 1; block_map[2][0] = 1; block_map[2][1] = 1;
+                        block_map[0][0] = 1; block_map[0][1] = 1;
+                        block_map[1][1] = 1;
+                        block_map[2][1] = 1;
                     end
                     2'd3: begin
-                        block_map[1][2] = 1;
-                        block_map[2][0] = 1; block_map[2][1] = 1; block_map[2][2] = 1;
+                        block_map[0][2] = 1;
+                        block_map[1][0] = 1; block_map[1][1] = 1; block_map[1][2] = 1;
                     end
                 endcase
 
@@ -97,16 +99,17 @@ module block_generator (
                         block_map[2][0] = 1; block_map[2][1] = 1;
                     end
                     2'd1: begin
-                        block_map[1][0] = 1;
-                        block_map[1][1] = 1; block_map[1][2] = 1;
-                        block_map[2][2] = 1;
+                        block_map[0][0] = 1; block_map[0][1] = 1; block_map[0][2] = 1;
+                        block_map[1][2] = 1;
                     end
                     2'd2: begin
-                        block_map[0][0] = 1; block_map[1][0] = 1; block_map[2][0] = 1;
-                        block_map[2][1] = 1;
+                        block_map[0][0] = 1; block_map[0][1] = 1;
+                        block_map[1][0] = 1;
+                        block_map[2][0] = 1;
                     end
                     2'd3: begin
-                        block_map[1][0] = 1; block_map[2][0] = 1; block_map[2][1] = 1; block_map[2][2] = 1;
+                        block_map[0][0] = 1;
+                        block_map[1][0] = 1; block_map[1][1] = 1; block_map[1][2] = 1;
                     end
                 endcase
         endcase

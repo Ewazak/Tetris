@@ -50,7 +50,12 @@ set sv_files {
     ../rtl/game_logic.sv
     ../rtl/top_uart.sv
     ../rtl/score.sv
-    ../rtl/score_counter.sv
+    ../rtl/score/score_counter.sv
+    ../rtl/score/score_display.sv
+    ../rtl/score/bin_ascii.sv
+    ../rtl/score/char_ram.sv
+    ../rtl/score/draw_rect_char.sv
+    ../rtl/score/score_top.sv
     ../rtl/top_game.sv
     rtl/Keyboard/debounce.sv
     rtl/Keyboard/KeyboardCtl.sv

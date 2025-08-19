@@ -52,11 +52,10 @@ module top_game (
     );
 
     always_ff @(posedge clk or posedge rst) begin
-        if (rst) begin
+        if (rst)
             kb_start_prev <= 1'b0;
-        end else begin
+        else
             kb_start_prev <= kb_start;
-        end
     end
     assign kb_start_edge = kb_start && !kb_start_prev;
 
@@ -159,6 +158,7 @@ module top_game (
         .clk(clk),
         .reset(rst),
         .lines_cleared(lines_removed),
+        .add_block(block_placed),
         .score(my_score)
     );
 
@@ -166,6 +166,8 @@ module top_game (
     // UART wymiana punktów
     // -----------------------------
     logic [7:0] uart_data_send, uart_data_received;
+
+    assign uart_data_send = my_score[7:0]; // wysyłamy dolny bajt wyniku
 
     top_uart u_top_uart (
         .clk(clk),
@@ -177,6 +179,11 @@ module top_game (
     );
 
     // Wynik przeciwnika z UART
-    assign enemy_score = {8'd0, uart_data_received}; // jeśli tylko 8 bitów
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst)
+            enemy_score <= 16'd0;
+        else
+            enemy_score <= {8'd0, uart_data_received};
+    end
 
 endmodule

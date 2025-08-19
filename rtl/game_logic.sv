@@ -54,6 +54,53 @@ function logic check_collision(
 endfunction
 
 // -------------------------
+// Zadanie: umieszczenie klocka i czyszczenie linii
+// -------------------------
+task place_block;
+    logic full_row[0:19];
+    begin
+        // Umieszczenie klocka w planszy
+        for (int i=0; i<4; i++) begin
+            for (int j=0; j<4; j++) begin
+                if (block_map[i][j]) begin
+                    int idx = (active_y+i)*10 + (active_x+j);
+                    if (idx >= 0 && idx < 200)
+                        board[idx] <= block_type;
+                end
+            end
+        end
+        block_placed <= 1;
+
+        // Sprawdzenie pełnych linii
+        lines_removed <= 0;
+        for (int row=0; row<20; row++) begin
+            full_row[row] = 1;
+            for (int col=0; col<10; col++) begin
+                if (board[row*10 + col] == 3'd0)
+                    full_row[row] = 0;
+            end
+        end
+
+        // Usuwanie pełnych linii od dołu do góry
+        for (int row=19; row>=0; row--) begin
+            if (full_row[row]) begin
+                lines_removed <= lines_removed + 1;
+                // przesunięcie w dół wszystkich wyższych linii
+                for (int r=row; r>0; r--) begin
+                    for (int c=0; c<10; c++) begin
+                        board[r*10 + c] <= board[(r-1)*10 + c];
+                    end
+                end
+                // zerowanie górnej linii
+                for (int c=0; c<10; c++) begin
+                    board[c] <= 3'd0;
+                end
+            end
+        end
+    end
+endtask
+
+// -------------------------
 // Główna logika gry
 // -------------------------
 always_ff @(posedge clk or posedge rst) begin
@@ -78,6 +125,7 @@ always_ff @(posedge clk or posedge rst) begin
             active_y <= 0;
             block_placed <= 0;
             fall_counter <= 0;
+            lines_removed <= 0; // reset przy wczytaniu nowego klocka
 
             if (check_collision(3, 0, block_map, board)) begin
                 game_over_flag <= 1;
@@ -98,7 +146,7 @@ always_ff @(posedge clk or posedge rst) begin
                 fall_counter <= 0;
             end
 
-            // Ręczne przesunięcie w dół (tylko o 1)
+            // Ręczne przesunięcie w dół
                 if (move_down && !check_collision(active_x, active_y+1, block_map, board)) begin
                     active_y <= active_y + 1;
                 end
@@ -117,56 +165,8 @@ always_ff @(posedge clk or posedge rst) begin
         end
     end
 
-// -------------------------
-// Zadanie: umieszczenie klocka i czyszczenie linii
-// -------------------------
-task place_block;
-    logic [19:0] full_row;
-    begin
-        // Umieszczenie klocka w planszy
-        for (int i=0; i<4; i++) begin
-            for (int j=0; j<4; j++) begin
-                if (block_map[i][j]) begin
-                    int idx = (active_y+i)*10 + (active_x+j);
-                    if (idx >= 0 && idx < 200)
-                        board[idx] <= block_type;
-                end
-            end
-        end
-        block_placed <= 1;
-
-        // Sprawdzenie pełnych linii
-        lines_removed <= 0;
-        for (int row=0; row<20; row++) begin
-            full_row[row] = 1;
-            for (int col=0; col<10; col++) begin
-                if (board[row*10 + col] == 3'd0)
-                    full_row[row] = 0;
-            end
-        end
-
-        // Usuwanie pełnych linii
-        for (int row=0; row<20; row++) begin
-            if (full_row[row]) begin
-                lines_removed <= lines_removed + 1;
-                for (int r=row; r>0; r--) begin
-                    for (int c=0; c<10; c++) begin
-                        board[r*10 + c] <= board[(r-1)*10 + c];
-                    end
-                end
-                for (int c=0; c<10; c++) begin
-                    board[c] <= 3'd0;
-                end
-            end
-        end
-    end
-endtask
-
 // Pozycja piksela do rysowania
-logic [10:0] tmp_x, tmp_y;
-assign tmp_x = BOARD_X + active_x * BLOCK_SIZE;
-assign tmp_y = BOARD_Y + active_y * BLOCK_SIZE;
-assign block_pos_x = tmp_x;
-assign block_pos_y = tmp_y;
+assign block_pos_x = BOARD_X + (active_x << 5);
+assign block_pos_y = BOARD_Y + (active_y << 5);
 
 endmodule
