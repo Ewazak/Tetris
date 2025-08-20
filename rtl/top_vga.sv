@@ -158,6 +158,24 @@
     );
 
 // -----------------------------
+// Game over display
+// -----------------------------
+    vga_if vga_game_over();
+    draw_game_over_screen #(
+        .SCALE(8)
+    ) u_draw_game_over_screen (
+        .clk(clk),
+        .rst(rst),
+        .vcount_in(vcount),
+        .vsync_in(vsync),
+        .vblnk_in(vblnk),
+        .hcount_in(hcount),
+        .hsync_in(hsync),
+        .hblnk_in(hblnk),
+        .out(vga_game_over)
+    );
+    
+// -----------------------------
 // Score display
 // -----------------------------
 
@@ -191,6 +209,10 @@
             // Wynik tylko w trakcie gry
             if (score_rgb != 12'h000)
                 final_rgb = score_rgb;
+    
+        end else if (in_game_over) begin
+            // Wyłącz planszę i klocki w game_over
+            final_rgb = vga_game_over.rgb;
         end else begin
             final_rgb = 12'h000; // fallback na czarne
         end

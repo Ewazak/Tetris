@@ -33,30 +33,35 @@ set xdc_files {
 
 # Specify SystemVerilog design files location   -- EDIT
 set sv_files {
+    ../rtl/draw_rect_char.sv
+    ../rtl/top_game.sv
+    ../rtl/game_logic.sv
+    ../rtl/top_uart.sv
+    ../rtl/score.sv
+    ../rtl/game_controller.sv
+    ../rtl/vga_if.sv
+    ../rtl/top_vga.sv
+    ../rtl/font_rom.sv
     ../rtl/timing/vga_pkg.sv
     ../rtl/timing//vga_timing.sv
     ../rtl/start_screen/draw_start_screen.sv
     ../rtl/start_screen/start_screen_rom.sv
     ../rtl/game_screen/draw_game_screen.sv
     ../rtl/game_screen/game_screen_rom.sv
-    ../rtl/game_controller.sv
-    ../rtl/vga_if.sv
-    ../rtl/top_vga.sv
-    ../rtl/font_rom.sv
+    ../rtl/game_over_screen/draw_game_over_screen.sv
+    ../rtl/game_over_screen/game_over_screen_rom.sv
+    ../rtl/game_over_screen/game_over_text.sv
+    ../rtl/score_screen/draw_score_screen.sv
+    ../rtl/score_screen/score_screen_rom.sv
     ../rtl/blocks/block_generator.sv
     ../rtl/blocks/block_randomizer.sv
     ../rtl/blocks/block_draw.sv
     ../rtl/blocks/board_renderer.sv
-    ../rtl/game_logic.sv
-    ../rtl/top_uart.sv
-    ../rtl/score.sv
     ../rtl/score/score_counter.sv
     ../rtl/score/score_display.sv
     ../rtl/score/bin_ascii.sv
     ../rtl/score/char_ram.sv
-    ../rtl/score/draw_rect_char.sv
     ../rtl/score/score_top.sv
-    ../rtl/top_game.sv
     rtl/Keyboard/debounce.sv
     rtl/Keyboard/KeyboardCtl.sv
     rtl/Keyboard/receiver.sv
@@ -83,4 +88,6 @@ set sv_files {
  set mem_files {
     ../rtl/start_screen/start_screen.dat
     ../rtl/game_screen/game_screen.dat
+    ../rtl/score_screen/score_screen.dat
+    ../rtl/game_over_screen/game_over_screen.dat
  }
