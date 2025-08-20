@@ -26,6 +26,7 @@ logic [31:0] fall_counter;
 
 // Poprzedni stan przycisków do detekcji zbocza
 logic move_left_prev, move_right_prev;
+logic block_just_placed;
 
 // -------------------------
 // Funkcja sprawdzania kolizji
@@ -54,12 +55,10 @@ function logic check_collision(
 endfunction
 
 // -------------------------
-// Zadanie: umieszczenie klocka i czyszczenie linii
+// Umieszczenie klocka
 // -------------------------
 task place_block;
-    logic full_row[0:19];
     begin
-        // Umieszczenie klocka w planszy
         for (int i=0; i<4; i++) begin
             for (int j=0; j<4; j++) begin
                 if (block_map[i][j]) begin
@@ -70,8 +69,16 @@ task place_block;
             end
         end
         block_placed <= 1;
+        block_just_placed <= 1;
+    end
+endtask
 
-        // Sprawdzenie pełnych linii
+// -------------------------
+// Czyszczenie linii
+// -------------------------
+task check_and_clear_lines;
+    logic full_row[0:19];
+    begin
         lines_removed <= 0;
         for (int row=0; row<20; row++) begin
             full_row[row] = 1;
@@ -81,20 +88,15 @@ task place_block;
             end
         end
 
-        // Usuwanie pełnych linii od dołu do góry
         for (int row=19; row>=0; row--) begin
             if (full_row[row]) begin
                 lines_removed <= lines_removed + 1;
-                // przesunięcie w dół wszystkich wyższych linii
                 for (int r=row; r>0; r--) begin
-                    for (int c=0; c<10; c++) begin
+                    for (int c=0; c<10; c++)
                         board[r*10 + c] <= board[(r-1)*10 + c];
-                    end
                 end
-                // zerowanie górnej linii
-                for (int c=0; c<10; c++) begin
+                for (int c=0; c<10; c++)
                     board[c] <= 3'd0;
-                end
             end
         end
     end
@@ -111,11 +113,15 @@ always_ff @(posedge clk or posedge rst) begin
         fall_counter <= 0;
         lines_removed <= 0;
         block_placed <= 0;
+        block_just_placed <= 0;
         game_over_flag <= 0;
         move_left_prev <= 0;
         move_right_prev <= 0;
     end
     else begin
+        block_placed <= 0;
+        lines_removed <= 0;
+
         // Aktualizacja poprzedniego stanu przycisków
         move_left_prev <= move_left;
         move_right_prev <= move_right;
@@ -123,8 +129,8 @@ always_ff @(posedge clk or posedge rst) begin
         if (load_new_block) begin
             active_x <= 3;
             active_y <= 0;
-            block_placed <= 0;
             fall_counter <= 0;
+            block_just_placed <= 0;
             lines_removed <= 0; // reset przy wczytaniu nowego klocka
 
             if (check_collision(3, 0, block_map, board)) begin
@@ -134,19 +140,22 @@ always_ff @(posedge clk or posedge rst) begin
             end
         end
         else if (!game_over_flag) begin
-            block_placed <= 0;
+            if (block_just_placed) begin
+                //sprawdzamy linie
+                check_and_clear_lines();
+                block_just_placed <= 0;
+            end else begin
+                // Ruchy poziome
+                if (move_left && !move_left_prev && !check_collision(active_x-1, active_y, block_map, board)) begin
+                    active_x <= active_x - 1;
+                    fall_counter <= 0;
+                end
+                else if (move_right && !move_right_prev && !check_collision(active_x+1, active_y, block_map, board)) begin
+                    active_x <= active_x + 1;
+                    fall_counter <= 0;
+                end
 
-            // Ruchy poziome (po pojedynczym naciśnięciu)
-            if (move_left && !move_left_prev && !check_collision(active_x-1, active_y, block_map, board)) begin
-                active_x <= active_x - 1;
-                fall_counter <= 0;
-            end
-            else if (move_right && !move_right_prev && !check_collision(active_x+1, active_y, block_map, board)) begin
-                active_x <= active_x + 1;
-                fall_counter <= 0;
-            end
-
-            // Ręczne przesunięcie w dół
+                // Ręczne przesunięcie w dół
                 if (move_down && !check_collision(active_x, active_y+1, block_map, board)) begin
                     active_y <= active_y + 1;
                 end
@@ -164,6 +173,7 @@ always_ff @(posedge clk or posedge rst) begin
             end
         end
     end
+end
 
 // Pozycja piksela do rysowania
 assign block_pos_x = BOARD_X + (active_x << 5);
