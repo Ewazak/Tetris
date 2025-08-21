@@ -46,6 +46,7 @@ set sv_files {
     ../rtl/timing//vga_timing.sv
     ../rtl/start_screen/draw_start_screen.sv
     ../rtl/start_screen/start_screen_rom.sv
+    ../rtl/start_screen/start_screen_text.sv
     ../rtl/game_screen/draw_game_screen.sv
     ../rtl/game_screen/game_screen_rom.sv
     ../rtl/game_over_screen/draw_game_over_screen.sv

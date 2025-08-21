@@ -7,16 +7,18 @@ module game_controller (
     output logic in_game,
     output logic in_start_screen,
     output logic in_game_over,
+    output logic in_score,
     output logic load_new_block        // nowy sygnał do generatora klocków
 );
 
     timeunit 1ns;
     timeprecision 1ps;
 
-    typedef enum logic [1:0] {
-        START_SCREEN = 2'b00,
-        PLAYING      = 2'b01,
-        GAME_OVER    = 2'b10
+    typedef enum logic [2:0] {
+        START_SCREEN = 3'b000,
+        PLAYING      = 3'b001,
+        GAME_OVER    = 3'b010,
+        SCORE        = 3'b011
     } state_t;
 
     state_t current_state, next_state;
@@ -44,6 +46,10 @@ module game_controller (
 
             GAME_OVER:
                 if (enter_pressed)
+                    next_state = SCORE;
+    
+            SCORE:
+                if (enter_pressed)
                     next_state = START_SCREEN;
         endcase
     end
@@ -52,6 +58,7 @@ module game_controller (
     assign in_start_screen = (current_state == START_SCREEN);
     assign in_game         = (current_state == PLAYING);
     assign in_game_over    = (current_state == GAME_OVER);
+    assign in_score        = (current_state == SCORE);
 
     // Generowanie impulsy load_new_block (1 takt na zmianę stanu lub block_placed)
     logic prev_playing;

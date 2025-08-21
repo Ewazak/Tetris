@@ -1,4 +1,4 @@
-module game_over_screen_text #(
+module start_screen_text #(
     parameter int SCALE = 4,
     parameter int ORIGIN_X = 50,
     parameter int ORIGIN_Y = 100
@@ -16,14 +16,14 @@ module game_over_screen_text #(
     import vga_pkg::*;
 
     // Tekst do wyświetlenia jako tablica ASCII
-    localparam int LEN = 24;
+    localparam int LEN = 20;
     localparam logic [6:0] TEXT [0:LEN-1] = {
-        "C","l","i","c","k"," ","E","N","T","E","R"," ","t","o"," ","s","e","e"," ","s","c","o","r","e"
+        "P","r","e","s","s"," ","E","N","T","E","R"," ","t","o"," ","s","t","a","r","t"
     };
 
     localparam int TEXT_PIXEL_WIDTH  = LEN * 8 * SCALE;
     localparam int TEXT_ORIGIN_X     = (HOR_PIXELS - TEXT_PIXEL_WIDTH)/2;
-    localparam int TEXT_ORIGIN_Y     = VER_PIXELS/2 + 200;
+    localparam int TEXT_ORIGIN_Y     = VER_PIXELS/2 + 35;
 
     logic [11:0] draw_rgb [0:LEN-1];
 

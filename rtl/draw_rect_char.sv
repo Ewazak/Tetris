@@ -2,7 +2,8 @@ module draw_rect_char #(
     parameter int ORIGIN_X = 100,
     parameter int ORIGIN_Y = 100,
     parameter int CHAR_WIDTH  = 8,
-    parameter int CHAR_HEIGHT = 16
+    parameter int CHAR_HEIGHT = 16,
+    parameter int SCALE = 1
 )(
     input  logic clk,
     input  logic rst,
@@ -22,8 +23,8 @@ module draw_rect_char #(
     logic [7:0] char_line_pixels;
     logic [11:0] rgb_nxt;
 
-    assign char_line = (vcount - ORIGIN_Y) % CHAR_HEIGHT;
-    assign pixel_bit = 7 - ((hcount - ORIGIN_X) % CHAR_WIDTH);
+    assign char_line = ((vcount - ORIGIN_Y)/SCALE) % CHAR_HEIGHT;
+    assign pixel_bit = 7 - (((hcount - ORIGIN_X)/SCALE) % CHAR_WIDTH);
 
 // ROM z czcionką
     font_rom rom_inst (
@@ -35,8 +36,8 @@ module draw_rect_char #(
     always_comb begin
         if (vblnk || hblnk) begin
             rgb_nxt = rgb_in;
-        end else if (vcount >= ORIGIN_Y && vcount < ORIGIN_Y + CHAR_HEIGHT &&
-                     hcount >= ORIGIN_X && hcount < ORIGIN_X + CHAR_WIDTH) begin
+        end else if (vcount >= ORIGIN_Y && vcount < ORIGIN_Y + CHAR_HEIGHT*SCALE &&
+                     hcount >= ORIGIN_X && hcount < ORIGIN_X + CHAR_WIDTH*SCALE) begin
             if (char_line_pixels[pixel_bit])
                 rgb_nxt = 12'hFFF;
             else

@@ -20,6 +20,7 @@ module top_game (
     output logic in_game,
     output logic in_start_screen,
     output logic in_game_over,
+    output logic in_score,
     output logic        block_placed
 );
 
@@ -71,6 +72,7 @@ module top_game (
         .in_game(in_game),
         .in_start_screen(in_start_screen),
         .in_game_over(in_game_over),
+        .in_score(in_score),
         .load_new_block(load_new_block)
     );
 

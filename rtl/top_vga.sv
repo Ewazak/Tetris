@@ -38,7 +38,7 @@
     logic [2:0]  current_block_type;
     logic [10:0] block_pos_x, block_pos_y;
     logic        block_placed;
-    logic in_game, in_start_screen, in_game_over;
+    logic in_game, in_start_screen, in_game_over, in_score;
 
     top_game u_top_game (
         .clk(clk),
@@ -58,6 +58,7 @@
         .in_game(in_game),
         .in_start_screen(in_start_screen),
         .in_game_over(in_game_over),
+        .in_score(in_score),
         .block_placed(block_placed)
     );
 
@@ -139,6 +140,20 @@
         .out(vga_start_screen)
     );
 
+    logic [11:0] start_text_rgb;
+
+    start_screen_text #(
+        .SCALE(4)
+    ) u_start_screen_text (
+        .clk(clk),
+        .rst(rst),
+        .hcount(hcount),
+        .vcount(vcount),
+        .hblnk(hblnk),
+        .vblnk(vblnk),
+        .rgb_in(vga_start_screen.rgb),
+        .rgb_out(start_text_rgb)
+    );
     // -----------------------------
     // Tło gry
     // -----------------------------
@@ -174,6 +189,39 @@
         .hblnk_in(hblnk),
         .out(vga_game_over)
     );
+
+    logic [11:0] game_over_text_rgb;
+
+    game_over_screen_text #(
+        .SCALE(4)
+    ) u_game_over_screen_text (
+        .clk(clk),
+        .rst(rst),
+        .hcount(hcount),
+        .vcount(vcount),
+        .hblnk(hblnk),
+        .vblnk(vblnk),
+        .rgb_in(vga_game_over.rgb),
+        .rgb_out(game_over_text_rgb)
+    );
+
+// -----------------------------
+// Score display - on the end
+// -----------------------------
+    vga_if vga_score_screen();
+    draw_score_screen #(
+        .SCALE(16)
+    ) u_draw_score_screen (
+        .clk(clk),
+        .rst(rst),
+        .vcount_in(vcount),
+        .vsync_in(vsync),
+        .vblnk_in(vblnk),
+        .hcount_in(hcount),
+        .hsync_in(hsync),
+        .hblnk_in(hblnk),
+        .out(vga_score_screen)
+    );
     
 // -----------------------------
 // Score display
@@ -197,7 +245,7 @@
     logic [11:0] final_rgb;
     always_comb begin
         if (in_start_screen) begin
-            final_rgb = vga_start_screen.rgb;
+            final_rgb = start_text_rgb;
         end else if (in_game) begin
             if (is_block_pixel_drawn)
                 final_rgb = block_rgb;
@@ -211,8 +259,9 @@
                 final_rgb = score_rgb;
     
         end else if (in_game_over) begin
-            // Wyłącz planszę i klocki w game_over
-            final_rgb = vga_game_over.rgb;
+            final_rgb = game_over_text_rgb;
+        end else if (in_score) begin
+            final_rgb = vga_score_screen.rgb;
         end else begin
             final_rgb = 12'h000; // fallback na czarne
         end

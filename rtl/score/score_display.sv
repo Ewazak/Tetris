@@ -37,8 +37,9 @@ module score_display (
     generate
         for (genvar i = 0; i < 11; i++) begin : draw_loop
             draw_rect_char #(
-                .ORIGIN_X(10 + i*8),
-                .ORIGIN_Y(10)
+                .ORIGIN_X(10 + i*8*2),
+                .ORIGIN_Y(10),
+                .SCALE(2) 
             ) draw_inst (
                 .clk(clk),
                 .rst(rst),
