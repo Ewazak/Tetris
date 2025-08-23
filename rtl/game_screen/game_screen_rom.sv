@@ -1,7 +1,15 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: game_screen_rom module - stores the game screen image as 12-bit RGB pixel data,
+*              initialized from .dat file.
+*/
 module game_screen_rom (
     input  logic        clk,
     input  logic [13:0] addr,        
-    output logic [11:0] pixel_data   // kolor RGB z ROM
+    output logic [11:0] pixel_data   // RGB color from ROM
 );
 
     timeunit 1ns;

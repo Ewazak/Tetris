@@ -1,3 +1,12 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: score_counter module - implementation of scoring logic for the game,
+*              calculate points based on the number of cleared lines 
+*              and whether a block was placed.
+*/
 module score_counter(
     input  logic clk,
     input  logic reset,
@@ -8,7 +17,7 @@ module score_counter(
 
     logic [15:0] points_to_add;
 
-// Obliczanie punktów do dodania
+// Points calculation
     always_comb begin
         points_to_add = 0;
         case (lines_cleared)
@@ -22,7 +31,7 @@ module score_counter(
             points_to_add = points_to_add + 4;
     end
 
-// Aktualizacja wyniku
+// Score update
     always_ff @(posedge clk) begin
         if (reset) begin
             score <= 16'd0;

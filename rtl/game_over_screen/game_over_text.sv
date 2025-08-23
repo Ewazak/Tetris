@@ -1,3 +1,11 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: game_over_screen_text module - displays centeres "Click ENTER to see score" on screen
+*              by multiple scaled characters.
+*/
 module game_over_screen_text #(
     parameter int SCALE = 4,
     parameter int ORIGIN_X = 50,
@@ -15,19 +23,20 @@ module game_over_screen_text #(
     
     import vga_pkg::*;
 
-    // Tekst do wyświetlenia jako tablica ASCII
+    // Text to be displayed as an ASCII array
     localparam int LEN = 24;
     localparam logic [6:0] TEXT [0:LEN-1] = {
         "C","l","i","c","k"," ","E","N","T","E","R"," ","t","o"," ","s","e","e"," ","s","c","o","r","e"
     };
 
+    // Calculated width of the text in pixels and its position on screen
     localparam int TEXT_PIXEL_WIDTH  = LEN * 8 * SCALE;
     localparam int TEXT_ORIGIN_X     = (HOR_PIXELS - TEXT_PIXEL_WIDTH)/2;
     localparam int TEXT_ORIGIN_Y     = VER_PIXELS/2 + 200;
 
     logic [11:0] draw_rgb [0:LEN-1];
 
-    // Generacja instancji draw_rect_char dla każdego znaku
+    // Generate one draw_rect_char instance for each character
     generate
         for (genvar i = 0; i < LEN; i++) begin : draw_loop
             draw_rect_char #(
@@ -48,7 +57,7 @@ module game_over_screen_text #(
         end
     endgenerate
 
-    // Scalanie RGB z wszystkich znaków
+    // Merge RGB outputs from all characters
     logic [11:0] rgb_nxt;
     always_comb begin
         rgb_nxt = rgb_in;

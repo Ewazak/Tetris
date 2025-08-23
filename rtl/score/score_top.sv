@@ -1,3 +1,10 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: score_top module - top module combining score counter and score display.
+*/
 module score_top(
     input  logic clk,
     input  logic reset,
@@ -7,7 +14,7 @@ module score_top(
     output vga_if vga_out
 );
 
-    logic [15:0] score;  // liczba zliczana przez counter
+    logic [15:0] score;  // the number counted by the counter
 
 // Counter
     score_counter u_score_counter (

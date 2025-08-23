@@ -1,3 +1,10 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: score_display module - renders the current game score on the screen.
+*/
 module score_display (
     input  logic clk,
     input  logic rst,
@@ -10,7 +17,7 @@ module score_display (
     output logic [11:0] rgb_out
 );
 
-// Konwersja bin - ASCII
+// Convert binary score into ASCII digits
     logic [6:0] ascii_digits[4:0];
     bin_ascii_sync bin_ascii_inst (
         .clk(clk),
@@ -23,7 +30,7 @@ module score_display (
         .ascii_4(ascii_digits[4])
     );
     
-// Tekst "SCORE:" + cyfry
+// Text "SCORE:" + digits
     logic [6:0] char_text[10:0];
     always_comb begin
         char_text[0] = "S"; char_text[1] = "C"; char_text[2] = "O";
@@ -32,7 +39,7 @@ module score_display (
             char_text[6 + i] = ascii_digits[i];
     end
 
-// Rysowanie znaków
+// Drawing characters
     logic [11:0] draw_rgb[10:0];
     generate
         for (genvar i = 0; i < 11; i++) begin : draw_loop
@@ -54,7 +61,7 @@ module score_display (
         end
     endgenerate
 
-// Scalanie RGB z wszystkich znaków
+// Merge RGB from all characters
     logic [11:0] rgb_nxt;
     always_comb begin
         rgb_nxt = rgb_in;

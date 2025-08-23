@@ -1,13 +1,20 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: block_generator module - generates a 4x4 block map for a given type and rotation.
+*/
 module block_generator (
-    input  logic [2:0] block_type,   // typ klocka (0..6)
-    input  logic [1:0] rotation,     // rotacja (0..3)
-    output logic [3:0][3:0] block_map // 4x4 pole klocka: 1 = pixel zajęty, 0 = pusty
+    input  logic [2:0] block_type,    // block type(0..6)
+    input  logic [1:0] rotation,      // rotation (0..3)
+    output logic [3:0][3:0] block_map // 4x4 block field: 1 = occupied, 0 = empty
 );
 
     integer x, y;
 
     always_comb begin
-        // domyślnie wszystko puste
+        // everything empty by default
         for (y = 0; y < 4; y = y + 1)
             for (x = 0; x < 4; x = x + 1)
                 block_map[y][x] = 1'b0;

@@ -1,5 +1,12 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: draw_game_over_screen module - displays a scaled "Game Over" from ROM
+*/
 module draw_game_over_screen #(
-    parameter SCALE = 8
+    parameter SCALE = 8 //scalliing factor for the original image
 )(
     input  logic clk,
     input  logic rst,
@@ -17,31 +24,31 @@ module draw_game_over_screen #(
 
     import vga_pkg::*;
 
-    // Oryginalne wymiary obrazu w ROM
+    // Original image dimensions in ROM
     localparam IMAGE_WIDTH_ORIG  = 128;
     localparam IMAGE_HEIGHT_ORIG = 96;
 
-    // Wymiary po skalowaniu
+    // Scaled image dimensions
     localparam IMAGE_WIDTH  = IMAGE_WIDTH_ORIG * SCALE;
     localparam IMAGE_HEIGHT = IMAGE_HEIGHT_ORIG * SCALE;
 
-    // Pozycjonowanie obrazu na środku ekranu
+    // Image position (center on the screen)
     localparam XPOS = (HOR_PIXELS - IMAGE_WIDTH) / 2;
     localparam YPOS = (VER_PIXELS - IMAGE_HEIGHT) / 2;
 
-    // Sygnały
-    logic [13:0] pixel_addr;       // adres w ROM
-    logic [11:0] pixel_data;       // dane z ROM
+    // Signals
+    logic [13:0] pixel_addr;       // ROM address
+    logic [11:0] pixel_data;       // data from ROM
     logic [11:0] rgb_nxt;
 
-    // Instancja ROM (mały obrazek)
+    // ROM instance (small image)
     game_over_screen_rom rom_inst (
         .clk(clk),
         .addr(pixel_addr),
         .pixel_data(pixel_data)
     );
 
-    // Pipeline 1 - oblicz adres z uwzględnieniem skalowania
+    // Pipeline 1 - compute ROM address with scalling
     always_ff @(posedge clk) begin
         if (rst) begin
             pixel_addr <= '0;
@@ -57,7 +64,7 @@ module draw_game_over_screen #(
         end
     end
 
-    // Pipeline 2 - odczyt ROM
+    // Pipeline 2 - ROM read
     always_ff @(posedge clk) begin
         if (rst) begin
             rgb_nxt <= 12'h000;
@@ -66,7 +73,7 @@ module draw_game_over_screen #(
         end
     end
 
-    // Pipeline 3 - opóźnienie sygnałów VGA o 2 cykle
+    // Pipeline 3 - delay VGA signals by 2 cycles
     logic [10:0] hcount_d1, vcount_d1, hcount_d2, vcount_d2;
     logic        hsync_d1, vsync_d1, hsync_d2, vsync_d2;
     logic        hblnk_d1, vblnk_d1, hblnk_d2, vblnk_d2;
@@ -80,7 +87,7 @@ module draw_game_over_screen #(
             hblnk_d1  <= 0; vblnk_d1  <= 0;
             hblnk_d2  <= 0; vblnk_d2  <= 0;
         end else begin
-            // pierwszy cykl opoznienia
+            // first delay cycle
             hcount_d1 <= hcount_in;
             vcount_d1 <= vcount_in;
             hsync_d1  <= hsync_in;
@@ -88,7 +95,7 @@ module draw_game_over_screen #(
             hblnk_d1  <= hblnk_in;
             vblnk_d1  <= vblnk_in;
 
-            // drugi cykl opoznienia
+            // second delay cycle
             hcount_d2 <= hcount_d1;
             vcount_d2 <= vcount_d1;
             hsync_d2  <= hsync_d1;
@@ -98,7 +105,7 @@ module draw_game_over_screen #(
         end
     end
 
-    // Pipeline 4 - wyjście
+    // Pipeline 4 - output
     always_ff @(posedge clk) begin
         if (rst) begin
             out.hcount <= 0;
