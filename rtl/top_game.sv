@@ -21,7 +21,10 @@ module top_game (
     output logic in_start_screen,
     output logic in_game_over,
     output logic in_score,
-    output logic        block_placed
+    output logic block_placed,
+    output logic other_ready,
+    output logic kb_start_flag,
+    output logic is_player1
 );
 
     import vga_pkg::*;
@@ -52,13 +55,66 @@ module top_game (
         .kb_falling(kb_falling)
     );
 
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst)
-            kb_start_prev <= 1'b0;
-        else
-            kb_start_prev <= kb_start;
+    always_ff @(posedge clk) kb_start_prev <= kb_start;
+    assign kb_start_edge = kb_start & ~kb_start_prev;
+
+    logic prev_in_score_flag;
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            prev_in_score_flag <= 1'b0;
+            kb_start_flag      <= 1'b0;
+        end else begin
+            prev_in_score_flag <= in_score;
+
+            // Reset flagi przy wejściu do SCORE
+            if (in_score && !prev_in_score_flag)
+                kb_start_flag <= 1'b0;
+            // Zatrzask dla START/GAME_OVER
+            else if ((in_start_screen || in_game_over) && kb_start_edge)
+                kb_start_flag <= 1'b1;
+            // Domyślnie w innych stanach ustawiamy na 0
+            else if (!(in_start_screen || in_game_over))
+                kb_start_flag <= 1'b0;
+        end
     end
-    assign kb_start_edge = kb_start && !kb_start_prev;
+
+// -----------------------------
+// Ustalanie, kto jest Player 1
+// -----------------------------
+logic player_assigned;
+logic is_player1_reg;
+
+always_ff @(posedge clk) begin
+    if (rst) begin
+        player_assigned <= 1'b0;
+        is_player1_reg  <= 1'b0;
+    end else begin
+        // RESET: po wyjściu ze SCORE
+        if (prev_in_score_flag && !in_score) begin
+            player_assigned <= 1'b0;
+            is_player1_reg  <= 1'b0;
+        end
+
+        // Przypisanie gracza tylko jeśli jeszcze nie ustalone
+        if (!player_assigned) begin
+            if (kb_start_flag && !other_ready) begin
+                is_player1_reg  <= 1'b1;   // ja pierwszy
+                player_assigned <= 1'b1;
+            end
+            else if (other_ready && !kb_start_flag) begin
+                is_player1_reg  <= 1'b0;   // przeciwnik pierwszy
+                player_assigned <= 1'b1;
+            end
+            else if (kb_start_flag && other_ready) begin
+                is_player1_reg  <= 1'b1;   // remis
+                player_assigned <= 1'b1;
+            end
+        end
+    end
+end
+
+
+    assign is_player1 = is_player1_reg;
 
     // -----------------------------
     // FSM gry
@@ -66,7 +122,8 @@ module top_game (
     game_controller u_game_controller (
         .clk(clk),
         .rst(rst),
-        .enter_pressed(kb_start_edge),
+        .me_ready(kb_start_flag),
+        .other_ready(other_ready),
         .game_over_flag(game_over_flag),
         .block_placed(block_placed),
         .in_game(in_game),
@@ -77,9 +134,22 @@ module top_game (
     );
 
     // -----------------------------
-    // Generator klocków
+    // Generator klocków i logika gry
     // -----------------------------
     logic [1:0] rotation;
+    logic kb_rotate_prev, kb_rotate_edge;
+    logic [2:0] lines_removed;
+    logic [3:0] active_x;
+    logic [4:0] active_y;
+
+    parameter BLOCK_SIZE = 32;
+    parameter BOARD_WIDTH_BLOCKS = 10;
+    parameter BOARD_HEIGHT_BLOCKS = 20;
+
+    localparam BOARD_WIDTH_PIXELS  = BOARD_WIDTH_BLOCKS  * BLOCK_SIZE;
+    localparam BOARD_HEIGHT_PIXELS = BOARD_HEIGHT_BLOCKS * BLOCK_SIZE;
+    localparam BOARD_X_CENTERED = (HOR_PIXELS - BOARD_WIDTH_PIXELS) / 2;
+    localparam BOARD_Y_CENTERED = (VER_PIXELS - BOARD_HEIGHT_PIXELS) / 2;
 
     block_randomizer u_block_randomizer (
         .clk(clk),
@@ -94,41 +164,13 @@ module top_game (
         .block_map(current_block_map)
     );
 
-    logic kb_rotate_prev, kb_rotate_edge;
+    always_ff @(posedge clk) kb_rotate_prev <= kb_rotate;
+    assign kb_rotate_edge = kb_rotate & ~kb_rotate_prev;
 
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst)
-            kb_rotate_prev <= 1'b0;
-        else
-            kb_rotate_prev <= kb_rotate;
-    end
-
-    assign kb_rotate_edge = kb_rotate && !kb_rotate_prev;
-
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst)
-            rotation <= 0;
-        else if (in_game && kb_rotate_edge)
+    always_ff @(posedge clk) begin
+        if (in_game && kb_rotate_edge)
             rotation <= (rotation + 1) % 4;
     end
-    
-    // -----------------------------
-    // Logika gry
-    // -----------------------------
-    logic [2:0] lines_removed;
-    logic [3:0] active_x;
-    logic [4:0] active_y;
-
-    parameter BLOCK_SIZE = 32; // rozmiar klocka w pikselach na ekranie
-    
-    // Wymiary planszy w klockach
-    parameter BOARD_WIDTH_BLOCKS = 10;
-    parameter BOARD_HEIGHT_BLOCKS = 20;
-
-    localparam BOARD_WIDTH_PIXELS = BOARD_WIDTH_BLOCKS * BLOCK_SIZE;
-    localparam BOARD_HEIGHT_PIXELS = BOARD_HEIGHT_BLOCKS * BLOCK_SIZE;
-    localparam BOARD_X_CENTERED = (HOR_PIXELS - BOARD_WIDTH_PIXELS) / 2;
-    localparam BOARD_Y_CENTERED = (VER_PIXELS - BOARD_HEIGHT_PIXELS) / 2;
 
     game_logic #(
     .BOARD_X(BOARD_X_CENTERED),
@@ -156,7 +198,7 @@ module top_game (
     // -----------------------------
     // Punkty
     // -----------------------------
-    score_counter u_score_counter (
+    points_counter u_points_counter (
         .clk(clk),
         .reset(rst),
         .lines_cleared(lines_removed),
@@ -165,11 +207,11 @@ module top_game (
     );
 
     // -----------------------------
-    // UART wymiana punktów
+    // UART wymiana sygnłu
     // -----------------------------
     logic [7:0] uart_data_send, uart_data_received;
-
-    assign uart_data_send = my_score[7:0]; // wysyłamy dolny bajt wyniku
+    wire ready_for_peer = kb_start_flag & (in_start_screen | in_game_over);
+    assign uart_data_send = { ready_for_peer, my_score[6:0] };
 
     top_uart u_top_uart (
         .clk(clk),
@@ -180,12 +222,18 @@ module top_game (
         .tx(tx)
     );
 
-    // Wynik przeciwnika z UART
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst)
+            other_ready <= 1'b0;
+        else
+            other_ready <= uart_data_received[7];
+    end
+
     always_ff @(posedge clk or posedge rst) begin
         if (rst)
             enemy_score <= 16'd0;
         else
-            enemy_score <= {8'd0, uart_data_received};
+            enemy_score <= {8'd0, 1'b0, uart_data_received[6:0]};
     end
 
 endmodule

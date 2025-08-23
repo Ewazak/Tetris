@@ -4,7 +4,6 @@
 //  - 128 (2^7) characters
 //  - ROM size: 512-by-8 (2^11-by-8) bits
 //              16K bits: 1 BRAM
-
 module font_rom
     (
         input  logic        clk,
@@ -18,10 +17,11 @@ module font_rom
     logic [7:0] data;
 
     // body
-    always_ff @(posedge clk)
+    always_ff @(posedge clk) begin
         char_line_pixels <= data;
+    end
 
-    always_comb
+    always_comb begin
         case (addr)
             //code x00
             11'h000: data = 8'b00000000; //
@@ -2200,5 +2200,6 @@ module font_rom
             11'h7fe: data = 8'b00000000; //
             11'h7ff: data = 8'b00000000; //
         endcase
+    end
 
 endmodule

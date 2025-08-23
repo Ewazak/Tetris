@@ -3,11 +3,11 @@
 * MTM UEC2
 * Author: Ewa Żakowska, Adrianna Solińska
 *
-* Description: score_counter module - implementation of scoring logic for the game,
+* Description: points_counter module - implementation of scoring logic for the game,
 *              calculate points based on the number of cleared lines 
 *              and whether a block was placed.
 */
-module score_counter(
+module points_counter(
     input  logic clk,
     input  logic reset,
     input  logic [2:0] lines_cleared,

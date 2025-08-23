@@ -1,9 +1,10 @@
 module game_controller (
     input  logic clk,
     input  logic rst,
-    input  logic enter_pressed,
+    input  logic me_ready,
     input  logic game_over_flag,
-    input  logic block_placed,        // nowy sygnał: klocek ułożony
+    input  logic block_placed,
+    input  logic other_ready,     // flaga drugiej płytki
     output logic in_game,
     output logic in_start_screen,
     output logic in_game_over,
@@ -35,9 +36,9 @@ module game_controller (
     always_comb begin : fsm_comb_blk
         next_state = current_state;
 
-        case (current_state)
+        unique case (current_state)
             START_SCREEN:
-                if (enter_pressed)
+                if (me_ready && other_ready)
                     next_state = PLAYING;
 
             PLAYING:
@@ -45,11 +46,11 @@ module game_controller (
                     next_state = GAME_OVER;
 
             GAME_OVER:
-                if (enter_pressed)
+                if (me_ready && other_ready)
                     next_state = SCORE;
     
             SCORE:
-                if (enter_pressed)
+                if (me_ready)
                     next_state = START_SCREEN;
         endcase
     end

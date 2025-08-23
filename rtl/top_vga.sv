@@ -39,6 +39,9 @@
     logic [10:0] block_pos_x, block_pos_y;
     logic        block_placed;
     logic in_game, in_start_screen, in_game_over, in_score;
+    logic other_ready;
+    logic kb_start_flag;
+    logic is_player1;
 
     top_game u_top_game (
         .clk(clk),
@@ -59,7 +62,10 @@
         .in_start_screen(in_start_screen),
         .in_game_over(in_game_over),
         .in_score(in_score),
-        .block_placed(block_placed)
+        .block_placed(block_placed),
+        .other_ready(other_ready),
+        .kb_start_flag(kb_start_flag),
+        .is_player1(is_player1)
     );
 
     // -----------------------------
@@ -83,7 +89,7 @@
     // -----------------------------
     // Render planszy i klocka
     // -----------------------------
-    logic [11:0] board_rgb, block_rgb, score_rgb;
+    logic [11:0] board_rgb, block_rgb, points_rgb;
     logic is_board_pixel_drawn, is_block_pixel_drawn;
 
     logic [3*200-1:0] board_flat;
@@ -142,8 +148,11 @@
 
     logic [11:0] start_text_rgb;
 
-    start_screen_text #(
-        .SCALE(4)
+    draw_text #(
+        .SCALE(4),
+        .FROM_MIDDLE(35),
+        .LEN(14),
+        .LINE("ENTER to start")
     ) u_start_screen_text (
         .clk(clk),
         .rst(rst),
@@ -154,8 +163,27 @@
         .rgb_in(vga_start_screen.rgb),
         .rgb_out(start_text_rgb)
     );
+
+    logic [11:0] waiting_text_rgb;
+
+    draw_text #(
+        .SCALE(4),
+        .FROM_MIDDLE(35),
+        .LEN(23),
+        .LINE("Wait for second player")
+    ) u_waiting_for_enemy_text (
+        .clk(clk),
+        .rst(rst),
+        .hcount(hcount),
+        .vcount(vcount),
+        .hblnk(hblnk),
+        .vblnk(vblnk),
+        .rgb_in(vga_start_screen.rgb),
+        .rgb_out(waiting_text_rgb)
+    );
+
     // -----------------------------
-    // Tło gry
+    // Game screen background
     // -----------------------------
     vga_if vga_game();
     draw_game_screen #(
@@ -191,10 +219,12 @@
     );
 
     logic [11:0] game_over_text_rgb;
-
-    game_over_screen_text #(
-        .SCALE(4)
-    ) u_game_over_screen_text (
+    draw_text #(
+        .SCALE(4),
+        .FROM_MIDDLE(200),
+        .LEN(18),
+        .LINE("ENTER to see score")
+    ) u_click_text (
         .clk(clk),
         .rst(rst),
         .hcount(hcount),
@@ -205,9 +235,26 @@
         .rgb_out(game_over_text_rgb)
     );
 
-// -----------------------------
-// Score display - on the end
-// -----------------------------
+    logic [11:0] waiting_for_end_text_rgb;
+    draw_text #(
+        .SCALE(4),
+        .FROM_MIDDLE(200),
+        .LEN(23),
+        .LINE("Wait for second player")
+    ) u_waiting_for_end_text (
+        .clk(clk),
+        .rst(rst),
+        .hcount(hcount),
+        .vcount(vcount),
+        .hblnk(hblnk),
+        .vblnk(vblnk),
+        .rgb_in(vga_game_over.rgb),
+        .rgb_out(waiting_for_end_text_rgb)
+    );
+
+    // -----------------------------
+    // Score display
+    // -----------------------------
     vga_if vga_score_screen();
     draw_score_screen #(
         .SCALE(16)
@@ -224,10 +271,14 @@
     );
     
 // -----------------------------
-// Score display
+// Points & Player indicator
 // -----------------------------
+    logic [11:0] vga_game_ff;
+    always_ff @(posedge clk or posedge rst)
+        vga_game_ff <= rst ? 12'h000 : vga_game.rgb;
 
-    score_display u_score_display (
+
+    points_display u_points_display (
         .clk(clk),
         .rst(rst),
         .score(my_score),
@@ -235,36 +286,104 @@
         .vcount(vcount),
         .hblnk(hblnk),
         .vblnk(vblnk),
-        .rgb_in(12'h000),
-        .rgb_out(score_rgb)
+        .rgb_in(vga_game_ff),
+        .rgb_out(points_rgb)
     );
+
+    logic [11:0] points_rgb_ff;
+    always_ff @(posedge clk or posedge rst)
+        points_rgb_ff <= rst ? 12'h000 : points_rgb;
+
+    logic [11:0] player_text_rgb;
+    player_indicator_text u_player_indicator (
+        .clk(clk), .rst(rst),
+        .hcount(hcount), .vcount(vcount),
+        .hblnk(hblnk), .vblnk(vblnk),
+        .rgb_in(points_rgb_ff),
+        .is_player1(is_player1),
+        .rgb_out(player_text_rgb)
+    );
+    logic [11:0] player_text_rgb_ff;
+    always_ff @(posedge clk or posedge rst)
+        player_text_rgb_ff <= rst ? 12'h000 : player_text_rgb;
+
+    logic [11:0] board_rgb_ff, block_rgb_ff;
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) begin
+            board_rgb_ff <= 12'h000;
+            block_rgb_ff <= 12'h000;
+        end else begin
+            board_rgb_ff <= is_board_pixel_drawn ? board_rgb : player_text_rgb_ff;
+            block_rgb_ff <= is_block_pixel_drawn ? block_rgb : board_rgb_ff;
+        end
+    end
+
+    // -----------------------------
+    // Pipeline: gotowe obrazy ekranów
+    // -----------------------------
+    logic [11:0] start_screen_rgb_reg;
+    logic [11:0] game_over_screen_rgb_reg;
+    logic [11:0] score_screen_rgb_reg;
+
+    always_ff @(posedge clk) begin
+        if (rst)
+            start_screen_rgb_reg <= 12'h000;
+        else if (in_start_screen) begin
+            // Pierwszy gracz jeszcze nie kliknął ENTER
+            if (!kb_start_flag && !other_ready)
+                start_screen_rgb_reg <= start_text_rgb;
+            // Jeden gotowy, drugi nie
+            else if ((kb_start_flag && !other_ready) || (!kb_start_flag && other_ready))
+                start_screen_rgb_reg <= waiting_text_rgb;
+            // Obaj gotowi
+            else
+                start_screen_rgb_reg <= vga_start_screen.rgb;
+        end else
+            start_screen_rgb_reg <= 12'h000;
+    end
+
+    always_ff @(posedge clk) begin
+        if (rst)
+            game_over_screen_rgb_reg <= 12'h000;
+        else if (in_game_over) begin
+            if (!kb_start_flag && !other_ready)
+                game_over_screen_rgb_reg <= game_over_text_rgb;
+            else if (kb_start_flag && !other_ready)
+                game_over_screen_rgb_reg <= waiting_for_end_text_rgb;
+            else
+                game_over_screen_rgb_reg <= vga_game_over.rgb;
+        end else
+            game_over_screen_rgb_reg <= 12'h000;
+    end
+
+    always_ff @(posedge clk) begin
+        if (rst)
+            score_screen_rgb_reg <= 12'h000;
+        else if (in_score)
+            score_screen_rgb_reg <= points_rgb_ff;
+        else
+            score_screen_rgb_reg <= 12'h000;
+    end
 
     // -----------------------------
     // MUX RGB
     // -----------------------------
     logic [11:0] final_rgb;
-    always_comb begin
-        if (in_start_screen) begin
-            final_rgb = start_text_rgb;
-        end else if (in_game) begin
-            if (is_block_pixel_drawn)
-                final_rgb = block_rgb;
-            else if (is_board_pixel_drawn)
-                final_rgb = board_rgb;
-            else
-                final_rgb = vga_game.rgb; // tło z ROM-u
 
-            // Wynik tylko w trakcie gry
-            if (score_rgb != 12'h000)
-                final_rgb = score_rgb;
-    
-        end else if (in_game_over) begin
-            final_rgb = game_over_text_rgb;
-        end else if (in_score) begin
-            final_rgb = vga_score_screen.rgb;
-        end else begin
-            final_rgb = 12'h000; // fallback na czarne
-        end
+    always_comb begin
+
+        final_rgb = 12'h000;
+
+        if (in_start_screen)
+            final_rgb = start_screen_rgb_reg;
+        else if (in_game)
+            final_rgb = block_rgb_ff;
+        else if (in_game_over)
+            final_rgb = game_over_screen_rgb_reg;
+        else if (in_score)
+            final_rgb = score_screen_rgb_reg;
+        else
+            final_rgb = 12'h000;
     end
 
     // -----------------------------

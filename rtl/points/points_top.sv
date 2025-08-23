@@ -3,9 +3,9 @@
 * MTM UEC2
 * Author: Ewa Żakowska, Adrianna Solińska
 *
-* Description: score_top module - top module combining score counter and score display.
+* Description: points_top module - top module combining score counter and score display.
 */
-module score_top(
+module points_top(
     input  logic clk,
     input  logic reset,
     input  logic [2:0] lines_cleared,
@@ -17,7 +17,7 @@ module score_top(
     logic [15:0] score;  // the number counted by the counter
 
 // Counter
-    score_counter u_score_counter (
+    points_counter u_points_counter (
         .clk(clk),
         .reset(reset),
         .lines_cleared(lines_cleared),
@@ -26,7 +26,7 @@ module score_top(
     );
 
 // Display
-    score_display u_score_display (
+    points_display u_points_display (
         .clk    (clk),
         .rst    (reset),
         .score  (score),
@@ -36,7 +36,7 @@ module score_top(
         .hblnk  (vga_in.hblnk),
         .vblnk  (vga_in.vblnk),
         .rgb_in (vga_in.rgb),
-        .rgb_out(score_rgb)
+        .rgb_out(points_rgb)
     );
 
     assign vga_out.hcount = vga_in.hcount;
@@ -45,6 +45,6 @@ module score_top(
     assign vga_out.vsync  = vga_in.vsync;
     assign vga_out.hblnk  = vga_in.hblnk;
     assign vga_out.vblnk  = vga_in.vblnk;
-    assign vga_out.rgb    = score_rgb;
+    assign vga_out.rgb    = points_rgb;
 
 endmodule
