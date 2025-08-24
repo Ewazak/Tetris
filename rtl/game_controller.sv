@@ -1,15 +1,22 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: game_controller module - implements the main FSM that controls the game.
+*/
 module game_controller (
     input  logic clk,
     input  logic rst,
     input  logic me_ready,
     input  logic game_over_flag,
     input  logic block_placed,
-    input  logic other_ready,     // flaga drugiej płytki
+    input  logic other_ready,     // flag from second board
     output logic in_game,
     output logic in_start_screen,
     output logic in_game_over,
     output logic in_score,
-    output logic load_new_block        // nowy sygnał do generatora klocków
+    output logic load_new_block  // pulse to block generator
 );
 
     timeunit 1ns;
@@ -24,7 +31,7 @@ module game_controller (
 
     state_t current_state, next_state;
 
-    // Rejestr stanu
+    // State register
     always_ff @(posedge clk or posedge rst) begin : fsm_ff_blk
         if (rst)
             current_state <= START_SCREEN;
@@ -32,7 +39,7 @@ module game_controller (
             current_state <= next_state;
     end
 
-    // Logika przejść
+    // Next-state logic
     always_comb begin : fsm_comb_blk
         next_state = current_state;
 
@@ -55,13 +62,13 @@ module game_controller (
         endcase
     end
 
-    // Wyjścia stanu
+    // Output signals
     assign in_start_screen = (current_state == START_SCREEN);
     assign in_game         = (current_state == PLAYING);
     assign in_game_over    = (current_state == GAME_OVER);
     assign in_score        = (current_state == SCORE);
 
-    // Generowanie impulsy load_new_block (1 takt na zmianę stanu lub block_placed)
+    // load_new_block pulse generator (1 for state change lub block_placed)
     logic prev_playing;
 
     always_ff @(posedge clk or posedge rst) begin
@@ -69,11 +76,11 @@ module game_controller (
             load_new_block <= 1'b0;
             prev_playing <= 1'b0;
         end else begin
-            // detekcja momentu wejścia do PLAYING
+            // Track previous state (to detect PLAYING entry)
             prev_playing <= (current_state == PLAYING);
 
-            if ((current_state == PLAYING && !prev_playing) ||  // wejście do PLAYING
-                (current_state == PLAYING && block_placed))      // klocek ułożony w trakcie gry
+            if ((current_state == PLAYING && !prev_playing) ||  // entering PLAYING
+                (current_state == PLAYING && block_placed))      // block placed during game
                 load_new_block <= 1'b1;
             else
                 load_new_block <= 1'b0;

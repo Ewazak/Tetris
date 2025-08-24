@@ -1,3 +1,10 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: draw_text module - renders text string on the screen by using multiple "draw_rect_char" module.
+*/
 module draw_text #(
     parameter int SCALE       = 4,
     parameter int LEN         = 5,
@@ -16,7 +23,7 @@ module draw_text #(
 
     import vga_pkg::*;
 
-    // Tablica znaków
+    // Array of ASCII codes 
     logic [6:0] TEXT [0:LEN-1];
 
     always_comb begin
@@ -28,14 +35,14 @@ module draw_text #(
         end
     end
 
-    // Wyliczenie pozycji startowej tekstu
+    // Calculate text position on the screen
     localparam int TEXT_PIXEL_WIDTH  = LEN * 8 * SCALE;
     localparam int TEXT_ORIGIN_X     = (HOR_PIXELS - TEXT_PIXEL_WIDTH)/2;
     localparam int TEXT_ORIGIN_Y     = VER_PIXELS/2 + FROM_MIDDLE;
 
     logic [11:0] draw_rgb [0:LEN-1];
 
-    // Generowanie każdego znaku
+    // Generate characters using draw_rect_char
     generate
         for (genvar i = 0; i < LEN; i++) begin : draw_loop
             draw_rect_char #(
@@ -56,7 +63,7 @@ module draw_text #(
         end
     endgenerate
 
-    // Łączenie znaków w jeden sygnał RGB
+    // Merge character outputs into a single RGB signal
     logic [11:0] rgb_nxt;
     always_comb begin
         rgb_nxt = rgb_in;

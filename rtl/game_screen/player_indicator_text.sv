@@ -1,3 +1,10 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: player_indicator_text module - displays "PLAYER 1" or "PLAYER 2" label depending on the signal.
+*/
 module player_indicator_text #(
     parameter int SCALE = 2
 )(
@@ -17,7 +24,7 @@ module player_indicator_text #(
     import vga_pkg::*;
 
     // -----------------------------
-    // Teksty gracza w tablicach
+    // Player text definitions
     // -----------------------------
     localparam int LEN = 8;
     localparam logic [6:0] TEXT_PLAYER1 [0:LEN-1] = {
@@ -35,7 +42,7 @@ module player_indicator_text #(
     end
 
     // -----------------------------
-    // RGB dla każdego znaku
+    // RGB output for each character
     // -----------------------------
     logic [11:0] draw_rgb [0:LEN-1];
 
@@ -60,7 +67,7 @@ module player_indicator_text #(
     endgenerate
 
     // -----------------------------
-    // Scalanie RGB
+    // Merge character RGB into final output
     // -----------------------------
     always_comb begin
         rgb_out = rgb_in;

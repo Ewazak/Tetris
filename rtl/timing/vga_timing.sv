@@ -2,9 +2,9 @@
  * Copyright (C) 2025  AGH University of Science and Technology
  * MTM UEC2
  * Author: Piotr Kaczmarczyk
- *
- * Description:
- * Vga timing controller.
+ * Modified: Ewa Żakowska, Adrianna Solińska
+ * 
+ * Description: Vga timing controller.
  */
 
  module vga_timing (

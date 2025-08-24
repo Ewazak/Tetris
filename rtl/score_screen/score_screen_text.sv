@@ -1,3 +1,11 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: score_screen_text module - displays the score screen text 
+*              (players scores and match result).
+*/
 module score_screen_text #(
     parameter int SCALE = 4
 )(
@@ -22,7 +30,7 @@ module score_screen_text #(
         "P","L","A","Y","E","R"," ","2",":"," ","0","0","0","0","0"
     };
 
-    // Wynik końcowy
+    // Final result
     localparam int LEN_RESULT_MAX = 12;
     localparam logic [6:0] TEXT_WON1 [0:LEN_RESULT_MAX-1] = {
         "P","L","A","Y","E","R"," ","1"," ","W","O","N"
@@ -35,7 +43,7 @@ module score_screen_text #(
     };
 
     // -------------------------------
-    // Konwersja wyników na ASCII
+    // Score conversion from binary to ASCII digits
     // -------------------------------
     logic [6:0] my_score_ascii [0:4];
     logic [6:0] enemy_score_ascii [0:4];
@@ -63,14 +71,14 @@ module score_screen_text #(
     end
 
     // -------------------------------
-    // Teksty wyjściowe
+    // Final text
     // -------------------------------
     logic [6:0] text_left [0:LEN_SCORE-1];
     logic [6:0] text_right[0:LEN_SCORE-1];
     logic [6:0] text_result[0:LEN_RESULT_MAX-1];
 
     always_comb begin
-        // PLAYER 1 (z wynikiem)
+        // PLAYER 1 (with score)
         for (int i = 0; i < LEN_SCORE; i++) begin
             if (i >= 10 && i <= 14)
                 text_left[i] = my_score_ascii[i-10];
@@ -78,7 +86,7 @@ module score_screen_text #(
                 text_left[i] = BASE_PLAYER1[i];
         end
 
-        // PLAYER 2 (z wynikiem)
+        // PLAYER 2 (with score)
         for (int i = 0; i < LEN_SCORE; i++) begin
             if (i >= 10 && i <= 14)
                 text_right[i] = enemy_score_ascii[i-10];
@@ -100,7 +108,7 @@ module score_screen_text #(
     end
 
     // -------------------------------
-    // Pozycje wyświetlania
+    // Text drawing positions
     // -------------------------------
     localparam int ORIGIN_Y_SCORE  = 100;
     localparam int ORIGIN_Y_RESULT = 250;
@@ -151,7 +159,7 @@ module score_screen_text #(
         end
     endgenerate
 
-    // RESULT (wyśrodkowany napis)
+    // RESULT (centered)
     generate
         for (genvar i = 0; i < LEN_RESULT_MAX; i++) begin : draw_result
             draw_rect_char #(
@@ -173,7 +181,7 @@ module score_screen_text #(
     endgenerate
 
     // -------------------------------
-    // Scalanie RGB
+    // Merging RGB outputs
     // -------------------------------
     logic [11:0] rgb_nxt;
     always_comb begin

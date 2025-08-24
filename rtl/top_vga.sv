@@ -6,10 +6,9 @@
  * Modified by:
  * 2025  AGH University of Science and Technology
  * MTM UEC2
- * Piotr Kaczmarczyk
+ * Piotr Kaczmarczyk, Ewa Żakowska, Adrianna Solińska
  *
- * Description:
- * The project top module.
+ * Description: The project top module.
  */
 
  module top_vga (
@@ -30,7 +29,7 @@
     import vga_pkg::*;
 
     // -----------------------------
-    // Połączenie z logiką gry
+    // Connection with game logic
     // -----------------------------
     logic [2:0]  board [0:199];
     logic [15:0] my_score, enemy_score;
@@ -87,7 +86,7 @@
     );
 
     // -----------------------------
-    // Render planszy i klocka
+    // Render board and block
     // -----------------------------
     logic [11:0] board_rgb, block_rgb, points_rgb;
     logic is_board_pixel_drawn, is_block_pixel_drawn;
@@ -319,7 +318,7 @@
     end
 
     // -----------------------------
-    // Pipeline: gotowe obrazy ekranów
+    // Pipeline: ready screen images
     // -----------------------------
     logic [11:0] start_screen_rgb_reg;
     logic [11:0] game_over_screen_rgb_reg;
@@ -329,13 +328,13 @@
         if (rst)
             start_screen_rgb_reg <= 12'h000;
         else if (in_start_screen) begin
-            // Pierwszy gracz jeszcze nie kliknął ENTER
+            // First player hasn't pressed ENTER yet
             if (!kb_start_flag && !other_ready)
                 start_screen_rgb_reg <= start_text_rgb;
-            // Jeden gotowy, drugi nie
+            // One ready, other not
             else if ((kb_start_flag && !other_ready) || (!kb_start_flag && other_ready))
                 start_screen_rgb_reg <= waiting_text_rgb;
-            // Obaj gotowi
+            // Both ready
             else
                 start_screen_rgb_reg <= vga_start_screen.rgb;
         end else
@@ -387,7 +386,7 @@
     end
 
     // -----------------------------
-    // Wyjścia VGA
+    // VGA outputs
     // -----------------------------
     assign vs = vsync;
     assign hs = hsync;

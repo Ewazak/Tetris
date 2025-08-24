@@ -1,3 +1,10 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: top_uart module - top-level UART interface module for sending and receiving 8-bit data.
+*/
 module top_uart
     (
         input logic clk,

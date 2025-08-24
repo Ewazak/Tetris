@@ -1,16 +1,23 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: top_game module - main game module which integrates all submodules.
+*/
 module top_game (
     input  logic        clk,
     input  logic        rst,
-    // Klawiatura
+    // Keyboard
     input  logic        ps2_clk,
     input  logic        ps2_data,
     // UART
     input  logic        rx,
     output logic        tx,
-    // Flaga końca gry
+    // Game over flag
     output  logic        game_over_flag,
-    // Wyjścia do rysowania (np. do top_vga)
-    output logic [2:0]  board   [0:199], // aktualny stan planszy
+    // Outputs for rendering (e.g. to top_vga)
+    output logic [2:0]  board   [0:199], // current board state
     output logic [15:0] my_score,
     output logic [15:0] enemy_score,
     output logic [3:0][3:0] current_block_map,
@@ -30,7 +37,7 @@ module top_game (
     import vga_pkg::*;
 
     // -----------------------------
-    // Klawiatura
+    // Keyboard
     // -----------------------------
     logic [15:0] keycode;
     logic kb_rotate, kb_down, kb_left, kb_right, kb_start, kb_falling;
@@ -66,20 +73,20 @@ module top_game (
         end else begin
             prev_in_score_flag <= in_score;
 
-            // Reset flagi przy wejściu do SCORE
+            // Reset flag when entering SCORE
             if (in_score && !prev_in_score_flag)
                 kb_start_flag <= 1'b0;
-            // Zatrzask dla START/GAME_OVER
+            // Latch for START/GAME_OVER
             else if ((in_start_screen || in_game_over) && kb_start_edge)
                 kb_start_flag <= 1'b1;
-            // Domyślnie w innych stanach ustawiamy na 0
+            // Default: in other states set to 0
             else if (!(in_start_screen || in_game_over))
                 kb_start_flag <= 1'b0;
         end
     end
 
 // -----------------------------
-// Ustalanie, kto jest Player 1
+// Determining who is Player 1
 // -----------------------------
 logic player_assigned;
 logic is_player1_reg;
@@ -89,24 +96,24 @@ always_ff @(posedge clk) begin
         player_assigned <= 1'b0;
         is_player1_reg  <= 1'b0;
     end else begin
-        // RESET: po wyjściu ze SCORE
+        // RESET: after leaving SCORE
         if (prev_in_score_flag && !in_score) begin
             player_assigned <= 1'b0;
             is_player1_reg  <= 1'b0;
         end
 
-        // Przypisanie gracza tylko jeśli jeszcze nie ustalone
+        // Assign player only if not decided yet
         if (!player_assigned) begin
             if (kb_start_flag && !other_ready) begin
-                is_player1_reg  <= 1'b1;   // ja pierwszy
+                is_player1_reg  <= 1'b1;   // I pressed first
                 player_assigned <= 1'b1;
             end
             else if (other_ready && !kb_start_flag) begin
-                is_player1_reg  <= 1'b0;   // przeciwnik pierwszy
+                is_player1_reg  <= 1'b0;   // opponent pressed first
                 player_assigned <= 1'b1;
             end
             else if (kb_start_flag && other_ready) begin
-                is_player1_reg  <= 1'b1;   // remis
+                is_player1_reg  <= 1'b1;   // tie
                 player_assigned <= 1'b1;
             end
         end
@@ -117,7 +124,7 @@ end
     assign is_player1 = is_player1_reg;
 
     // -----------------------------
-    // FSM gry
+    // Game FSM
     // -----------------------------
     game_controller u_game_controller (
         .clk(clk),
@@ -134,7 +141,7 @@ end
     );
 
     // -----------------------------
-    // Generator klocków i logika gry
+    // Block generator and game logic
     // -----------------------------
     logic [1:0] rotation;
     logic kb_rotate_prev, kb_rotate_edge;
@@ -196,7 +203,7 @@ end
     );
 
     // -----------------------------
-    // Punkty
+    // Points
     // -----------------------------
     points_counter u_points_counter (
         .clk(clk),
@@ -207,7 +214,7 @@ end
     );
 
     // -----------------------------
-    // UART wymiana sygnłu
+    // UART signal exchange
     // -----------------------------
     logic [7:0] uart_data_send, uart_data_received;
     wire ready_for_peer = kb_start_flag & (in_start_screen | in_game_over);

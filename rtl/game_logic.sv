@@ -1,3 +1,11 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: game_logic module - maintains the state of game board, active block position,
+*              detects collision, clears full lines and signals game-over conditions.
+*/
 module game_logic #(
     parameter BOARD_X = 100,
     parameter BOARD_Y = 50,
@@ -24,12 +32,12 @@ module game_logic #(
 localparam FALL_LIMIT = 65_000_000;
 logic [31:0] fall_counter;
 
-// Poprzedni stan przycisków do detekcji zbocza
+// Previous button states (for edge detection)
 logic move_left_prev, move_right_prev;
 logic block_just_placed;
 
 // -------------------------
-// Funkcja sprawdzania kolizji
+// Collision detection function
 // -------------------------
 function logic check_collision(
     input int nx,
@@ -55,7 +63,7 @@ function logic check_collision(
 endfunction
 
 // -------------------------
-// Umieszczenie klocka
+// Place block on the board
 // -------------------------
 task place_block;
     begin
@@ -74,7 +82,7 @@ task place_block;
 endtask
 
 // -------------------------
-// Czyszczenie linii
+// Line clear detection
 // -------------------------
 task check_and_clear_lines;
     logic full_row[0:19];
@@ -103,7 +111,7 @@ task check_and_clear_lines;
 endtask
 
 // -------------------------
-// Główna logika gry
+// Main game logic
 // -------------------------
 always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
@@ -122,7 +130,7 @@ always_ff @(posedge clk or posedge rst) begin
         block_placed <= 0;
         lines_removed <= 0;
 
-        // Aktualizacja poprzedniego stanu przycisków
+        // Update button history
         move_left_prev <= move_left;
         move_right_prev <= move_right;
 
@@ -131,7 +139,7 @@ always_ff @(posedge clk or posedge rst) begin
             active_y <= 0;
             fall_counter <= 0;
             block_just_placed <= 0;
-            lines_removed <= 0; // reset przy wczytaniu nowego klocka
+            lines_removed <= 0; // reset when new block placed
 
             if (check_collision(3, 0, block_map, board)) begin
                 game_over_flag <= 1;
@@ -141,11 +149,11 @@ always_ff @(posedge clk or posedge rst) begin
         end
         else if (!game_over_flag) begin
             if (block_just_placed) begin
-                //sprawdzamy linie
+                //check lines
                 check_and_clear_lines();
                 block_just_placed <= 0;
             end else begin
-                // Ruchy poziome
+                // Horizontal movement
                 if (move_left && !move_left_prev && !check_collision(active_x-1, active_y, block_map, board)) begin
                     active_x <= active_x - 1;
                     fall_counter <= 0;
@@ -155,12 +163,12 @@ always_ff @(posedge clk or posedge rst) begin
                     fall_counter <= 0;
                 end
 
-                // Ręczne przesunięcie w dół
+                // Manual downward move
                 if (move_down && !check_collision(active_x, active_y+1, block_map, board)) begin
                     active_y <= active_y + 1;
                 end
 
-                // Automatyczne opadanie
+                // Automatic falling
                 fall_counter <= fall_counter + 1;
                 if (fall_counter >= FALL_LIMIT) begin
                     fall_counter <= 0;
@@ -175,7 +183,7 @@ always_ff @(posedge clk or posedge rst) begin
     end
 end
 
-// Pozycja piksela do rysowania
+// Pixel position for renderer
 assign block_pos_x = BOARD_X + (active_x << 5);
 assign block_pos_y = BOARD_Y + (active_y << 5);
 

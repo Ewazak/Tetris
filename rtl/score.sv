@@ -1,3 +1,10 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: score module - compares two 16-bit scores and produces 2-bit result indicating outcome of the game.
+*/
 module score (
     input  logic [15:0] my_score,
     input  logic [15:0] enemy_score,

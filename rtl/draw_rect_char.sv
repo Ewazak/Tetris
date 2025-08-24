@@ -1,3 +1,10 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: draw_rect_char module - draws a single ASCII character at a given position.
+*/
 module draw_rect_char #(
     parameter int ORIGIN_X = 100,
     parameter int ORIGIN_Y = 100,
@@ -8,13 +15,13 @@ module draw_rect_char #(
     input  logic clk,
     input  logic rst,
     input  logic [6:0] char_code,
-    // wejściowe sygnały VGA
+    // VGA input signals
     input  logic [10:0] hcount,
     input  logic [10:0] vcount,
     input  logic        hblnk,
     input  logic        vblnk,
     input  logic [11:0] rgb_in,
-    // wyjście RGB
+    // RGB output
     output logic [11:0] rgb_out
 );
 
@@ -26,7 +33,7 @@ module draw_rect_char #(
     assign char_line = ((vcount - ORIGIN_Y)/SCALE) % CHAR_HEIGHT;
     assign pixel_bit = 7 - (((hcount - ORIGIN_X)/SCALE) % CHAR_WIDTH);
 
-// ROM z czcionką
+// Font ROM instance
     font_rom rom_inst (
         .clk(clk),
         .addr({char_code, char_line}),
