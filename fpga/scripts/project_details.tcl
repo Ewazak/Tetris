@@ -38,11 +38,11 @@ set sv_files {
     ../rtl/top_game.sv
     ../rtl/game_logic.sv
     ../rtl/top_uart.sv
-    ../rtl/score.sv
     ../rtl/game_controller.sv
     ../rtl/vga_if.sv
     ../rtl/top_vga.sv
     ../rtl/font_rom.sv
+    ../rtl/font_arbiter.sv
     ../rtl/timing/vga_pkg.sv
     ../rtl/timing//vga_timing.sv
     ../rtl/start_screen/draw_start_screen.sv
@@ -61,7 +61,7 @@ set sv_files {
     ../rtl/blocks/board_renderer.sv
     ../rtl/points/points_counter.sv
     ../rtl/points/points_display.sv
-    ../rtl/points/bin_ascii.sv
+    ../rtl/points/bin_ascii_sync.sv
     ../rtl/points/char_ram.sv
     ../rtl/points/points_top.sv
     rtl/Keyboard/debounce.sv

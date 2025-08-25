@@ -5,6 +5,7 @@ module KeyboardCtl (
     output logic kb_left,
     output logic kb_right,
     output logic kb_start,
+    output logic kb_reset,
     output logic kb_falling
 );
 
@@ -18,6 +19,7 @@ localparam KEY_DOWN   = 8'h72; // Strzalka w dol
 localparam KEY_RIGHT  = 8'h74; // Strzalka w prawo
 localparam KEY_FALLING = 8'h29; //Spacja
 localparam KEY_START  = 8'h5A; // ENTER
+localparam KEY_RESET = 8'h76; // ESC
 localparam KEY_BREAK  = 8'hF0;
 
 always_comb begin
@@ -29,6 +31,7 @@ always_comb begin
         kb_right  = 1'b0;
         kb_falling = 1'b0;
         kb_start  = 1'b0;
+        kb_reset = 1'b0;
     end else begin
         // Klawisz wciśnięty
         kb_rotate = (keycode[7:0] == KEY_ROTATE);
@@ -37,6 +40,7 @@ always_comb begin
         kb_right  = (keycode[7:0] == KEY_RIGHT);
         kb_falling = (keycode[7:0] == KEY_FALLING);
         kb_start  = (keycode[7:0] == KEY_START);
+        kb_reset    = (keycode[7:0] == KEY_RESET);
     end
 end
 

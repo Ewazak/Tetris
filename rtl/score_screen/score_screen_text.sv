@@ -7,7 +7,8 @@
 *              (players scores and match result).
 */
 module score_screen_text #(
-    parameter int SCALE = 4
+    parameter SCALE = 3,
+    parameter LATENCY = 2
 )(
     input  logic clk,
     input  logic rst,
@@ -18,164 +19,224 @@ module score_screen_text #(
     input  logic [11:0] rgb_in,
     input  logic [15:0] my_score,
     input  logic [15:0] enemy_score,
+    input  logic is_player1,         // local player
+
+    // font client ports
+    input  logic [7:0]  font_data,
+    input  logic        font_grant,
+    output logic        font_req,
+    output logic [10:0] font_addr,
+
     output logic [11:0] rgb_out
 );
     import vga_pkg::*;
 
-    localparam int LEN_SCORE = 15;
-    localparam logic [6:0] BASE_PLAYER1 [0:LEN_SCORE-1] = {
+    localparam LEN_SCORE   = 15;
+    localparam LEN_RESULT = 12;
+
+    localparam logic [6:0] PLAYER1_LABEL [0:LEN_SCORE-1] = {
         "P","L","A","Y","E","R"," ","1",":"," ","0","0","0","0","0"
     };
-    localparam logic [6:0] BASE_PLAYER2 [0:LEN_SCORE-1] = {
+    localparam logic [6:0] PLAYER2_LABEL [0:LEN_SCORE-1] = {
         "P","L","A","Y","E","R"," ","2",":"," ","0","0","0","0","0"
     };
 
     // Final result
-    localparam int LEN_RESULT_MAX = 12;
-    localparam logic [6:0] TEXT_WON1 [0:LEN_RESULT_MAX-1] = {
+    localparam logic [6:0] RESULT_WIN1 [0:LEN_RESULT-1] = {
         "P","L","A","Y","E","R"," ","1"," ","W","O","N"
     };
-    localparam logic [6:0] TEXT_WON2 [0:LEN_RESULT_MAX-1] = {
+    localparam logic [6:0] RESULT_WIN2 [0:LEN_RESULT-1] = {
         "P","L","A","Y","E","R"," ","2"," ","W","O","N"
     };
-    localparam logic [6:0] TEXT_DRAW [0:LEN_RESULT_MAX-1] = {
+    localparam logic [6:0] RESULT_DRAW [0:LEN_RESULT-1] = {
         "D","R","A","W"," "," "," "," "," "," "," "," "
     };
 
     // -------------------------------
     // Score conversion from binary to ASCII digits
     // -------------------------------
-    logic [6:0] my_score_ascii [0:4];
-    logic [6:0] enemy_score_ascii [0:4];
+    logic [6:0] my_ascii [0:4];
+    logic [6:0] enemy_ascii [0:4];
 
-    function logic [6:0] digit_to_ascii(input logic [3:0] d);
-        return 7'd48 + d; // '0' + d
-    endfunction
+    bin_ascii_sync u_my_score_ascii (
+        .clk(clk), .rst(rst),
+        .bin_in(my_score),
+        .ascii_0(my_ascii[0]),
+        .ascii_1(my_ascii[1]),
+        .ascii_2(my_ascii[2]),
+        .ascii_3(my_ascii[3]),
+        .ascii_4(my_ascii[4])
+    );
 
+    bin_ascii_sync u_enemy_score_ascii (
+        .clk(clk), .rst(rst),
+        .bin_in(enemy_score),
+        .ascii_0(enemy_ascii[0]),
+        .ascii_1(enemy_ascii[1]),
+        .ascii_2(enemy_ascii[2]),
+        .ascii_3(enemy_ascii[3]),
+        .ascii_4(enemy_ascii[4])
+    );
+
+    logic [6:0] text_left  [0:LEN_SCORE-1];
+    logic [6:0] text_right [0:LEN_SCORE-1];
+    logic [6:0] text_result[0:LEN_RESULT-1];
+
+    integer ii;
     always_comb begin
-        logic [15:0] temp;
-
-        // PLAYER 1 score
-        temp = my_score;
-        for (int i = 4; i >= 0; i--) begin
-            my_score_ascii[i] = digit_to_ascii(temp % 10);
-            temp = temp / 10;
-        end
-
-        // PLAYER 2 score
-        temp = enemy_score;
-        for (int i = 4; i >= 0; i--) begin
-            enemy_score_ascii[i] = digit_to_ascii(temp % 10);
-            temp = temp / 10;
+        if (is_player1) begin
+            for (ii = 0; ii < LEN_SCORE; ii = ii + 1) begin
+                text_left[ii]  = PLAYER1_LABEL[ii];
+                text_right[ii] = PLAYER2_LABEL[ii];
+            end
+            for (ii = 0; ii < 5; ii = ii + 1) begin
+                text_left[10+ii]  = (my_ascii[ii] == 0) ? "0" : my_ascii[ii];
+                text_right[10+ii] = (enemy_ascii[ii] == 0) ? "0" : enemy_ascii[ii];
+            end
+            if (my_score > enemy_score)
+                for (ii = 0; ii < LEN_RESULT; ii = ii + 1) text_result[ii] = RESULT_WIN1[ii];
+            else if (my_score < enemy_score)
+                for (ii = 0; ii < LEN_RESULT; ii = ii + 1) text_result[ii] = RESULT_WIN2[ii];
+            else
+                for (ii = 0; ii < LEN_RESULT; ii = ii + 1) text_result[ii] = RESULT_DRAW[ii];
+        end else begin
+            for (ii = 0; ii < LEN_SCORE; ii = ii + 1) begin
+                text_left[ii]  = PLAYER2_LABEL[ii];
+                text_right[ii] = PLAYER1_LABEL[ii];
+            end
+            for (ii = 0; ii < 5; ii = ii + 1) begin
+                text_left[10+ii]  = (my_ascii[ii] == 0) ? "0" : my_ascii[ii];
+                text_right[10+ii] = (enemy_ascii[ii] == 0) ? "0" : enemy_ascii[ii];
+            end
+            if (my_score > enemy_score)
+                for (ii = 0; ii < LEN_RESULT; ii = ii + 1) text_result[ii] = RESULT_WIN2[ii];
+            else if (my_score < enemy_score)
+                for (ii = 0; ii < LEN_RESULT; ii = ii + 1) text_result[ii] = RESULT_WIN1[ii];
+            else
+                for (ii = 0; ii < LEN_RESULT; ii = ii + 1) text_result[ii] = RESULT_DRAW[ii];
         end
     end
 
-    // -------------------------------
-    // Final text
-    // -------------------------------
-    logic [6:0] text_left [0:LEN_SCORE-1];
-    logic [6:0] text_right[0:LEN_SCORE-1];
-    logic [6:0] text_result[0:LEN_RESULT_MAX-1];
+    localparam CHAR_W = 8;
+    localparam CHAR_H = 16;
 
+    localparam int X_ORIGIN = (HOR_PIXELS - LEN_SCORE*CHAR_W*SCALE)/2;
+    localparam int X_RESULT = (HOR_PIXELS - LEN_RESULT*CHAR_W*SCALE)/2;
+
+    localparam int Y_SCORE1 = 220;
+    localparam int Y_SCORE2 = Y_SCORE1 + CHAR_H*SCALE + 40;
+    localparam int Y_RESULT = Y_SCORE2 + CHAR_H*SCALE + 60;
+
+    logic [11:0] draw_rgb_left  [0:LEN_SCORE-1];
+    logic [11:0] draw_rgb_right [0:LEN_SCORE-1];
+    logic [11:0] draw_rgb_result[0:LEN_RESULT-1];
+
+    logic [7:0] font_data_reg;
+    always_ff @(posedge clk) begin
+        if (rst) font_data_reg <= 8'h00;
+        else if (font_grant) font_data_reg <= font_data;
+    end
+
+    function automatic void future_pos(input int add, input int cur_h, input int cur_v,
+                                       output int out_h, output int out_v);
+        int nh; int nv;
+        nh = cur_h + add; nv = cur_v;
+        if (nh >= HOR_PIXELS) begin nh -= HOR_PIXELS; nv += 1; end
+        out_h = nh; out_v = nv;
+    endfunction
+
+    logic req_local;
+    logic [10:0] addr_local;
+    integer ph,pv,idx,line;
     always_comb begin
-        // PLAYER 1 (with score)
-        for (int i = 0; i < LEN_SCORE; i++) begin
-            if (i >= 10 && i <= 14)
-                text_left[i] = my_score_ascii[i-10];
-            else
-                text_left[i] = BASE_PLAYER1[i];
-        end
+        req_local  = 0;
+        addr_local = 0;
+        future_pos(LATENCY, hcount, vcount, ph, pv);
 
-        // PLAYER 2 (with score)
-        for (int i = 0; i < LEN_SCORE; i++) begin
-            if (i >= 10 && i <= 14)
-                text_right[i] = enemy_score_ascii[i-10];
-            else
-                text_right[i] = BASE_PLAYER2[i];
+        // First score line (local player)
+        if (pv >= Y_SCORE1 && pv < Y_SCORE1 + CHAR_H*SCALE &&
+            ph >= X_ORIGIN && ph < X_ORIGIN + LEN_SCORE*CHAR_W*SCALE) begin
+            idx  = (ph - X_ORIGIN) / (CHAR_W*SCALE);
+            line = ((pv - Y_SCORE1)/SCALE) % CHAR_H;
+            req_local  = 1;
+            addr_local = { text_left[idx], line[3:0] };
+        end
+        // Second score line (rival player)
+        else if (pv >= Y_SCORE2 && pv < Y_SCORE2 + CHAR_H*SCALE &&
+                 ph >= X_ORIGIN && ph < X_ORIGIN + LEN_SCORE*CHAR_W*SCALE) begin
+            idx  = (ph - X_ORIGIN) / (CHAR_W*SCALE);
+            line = ((pv - Y_SCORE2)/SCALE) % CHAR_H;
+            req_local  = 1;
+            addr_local = { text_right[idx], line[3:0] };
         end
 
         // RESULT
-        if (my_score > enemy_score) begin
-            for (int i = 0; i < LEN_RESULT_MAX; i++)
-                text_result[i] = TEXT_WON1[i];
-        end else if (my_score < enemy_score) begin
-            for (int i = 0; i < LEN_RESULT_MAX; i++)
-                text_result[i] = TEXT_WON2[i];
-        end else begin
-            for (int i = 0; i < LEN_RESULT_MAX; i++)
-                text_result[i] = TEXT_DRAW[i];
+        else if (pv >= Y_RESULT && pv < Y_RESULT + CHAR_H*SCALE &&
+                 ph >= X_RESULT && ph < X_RESULT + LEN_RESULT*CHAR_W*SCALE) begin
+            idx  = (ph - X_RESULT) / (CHAR_W*SCALE);
+            line = ((pv - Y_RESULT)/SCALE) % CHAR_H;
+            req_local  = 1;
+            addr_local = { text_result[idx], line[3:0] };
         end
     end
 
-    // -------------------------------
-    // Text drawing positions
-    // -------------------------------
-    localparam int ORIGIN_Y_SCORE  = 100;
-    localparam int ORIGIN_Y_RESULT = 250;
+    assign font_req  = req_local;
+    assign font_addr = addr_local;
 
-    logic [11:0] draw_rgb_left [0:LEN_SCORE-1];
-    logic [11:0] draw_rgb_right[0:LEN_SCORE-1];
-    logic [11:0] draw_rgb_result[0:LEN_RESULT_MAX-1];
-
-    // LEFT
+    genvar gi;
     generate
-        for (genvar i = 0; i < LEN_SCORE; i++) begin : draw_left
+        // Local player
+        for (gi = 0; gi < LEN_SCORE; gi++) begin
             draw_rect_char #(
-                .ORIGIN_X(50 + i*8*SCALE),
-                .ORIGIN_Y(ORIGIN_Y_SCORE),
+                .ORIGIN_X(X_ORIGIN + gi*CHAR_W*SCALE),
+                .ORIGIN_Y(Y_SCORE1),
                 .SCALE(SCALE)
             ) draw_inst (
                 .clk(clk),
                 .rst(rst),
-                .char_code(text_left[i]),
+                .char_line_pixels(font_data_reg),
                 .hcount(hcount),
                 .vcount(vcount),
                 .hblnk(hblnk),
                 .vblnk(vblnk),
                 .rgb_in(rgb_in),
-                .rgb_out(draw_rgb_left[i])
+                .rgb_out(draw_rgb_left[gi])
             );
         end
-    endgenerate
-
-    // RIGHT
-    generate
-        for (genvar i = 0; i < LEN_SCORE; i++) begin : draw_right
+        // Rival player
+        for (gi = 0; gi < LEN_SCORE; gi++) begin
             draw_rect_char #(
-                .ORIGIN_X(HOR_PIXELS - (LEN_SCORE*8*SCALE) + i*8*SCALE),
-                .ORIGIN_Y(ORIGIN_Y_SCORE),
+                .ORIGIN_X(X_ORIGIN + gi*CHAR_W*SCALE),
+                .ORIGIN_Y(Y_SCORE2),
                 .SCALE(SCALE)
             ) draw_inst (
                 .clk(clk),
                 .rst(rst),
-                .char_code(text_right[i]),
+                .char_line_pixels(font_data_reg),
                 .hcount(hcount),
                 .vcount(vcount),
                 .hblnk(hblnk),
                 .vblnk(vblnk),
                 .rgb_in(rgb_in),
-                .rgb_out(draw_rgb_right[i])
+                .rgb_out(draw_rgb_right[gi])
             );
         end
-    endgenerate
-
     // RESULT (centered)
-    generate
-        for (genvar i = 0; i < LEN_RESULT_MAX; i++) begin : draw_result
+        for (gi = 0; gi < LEN_RESULT; gi++) begin
             draw_rect_char #(
-                .ORIGIN_X((HOR_PIXELS - LEN_RESULT_MAX*8*SCALE)/2 + i*8*SCALE),
-                .ORIGIN_Y(ORIGIN_Y_RESULT),
+                .ORIGIN_X(X_RESULT + gi*CHAR_W*SCALE),
+                .ORIGIN_Y(Y_RESULT),
                 .SCALE(SCALE)
             ) draw_inst (
                 .clk(clk),
                 .rst(rst),
-                .char_code(text_result[i]),
+                .char_line_pixels(font_data_reg),
                 .hcount(hcount),
                 .vcount(vcount),
                 .hblnk(hblnk),
                 .vblnk(vblnk),
                 .rgb_in(rgb_in),
-                .rgb_out(draw_rgb_result[i])
+                .rgb_out(draw_rgb_result[gi])
             );
         end
     endgenerate
@@ -183,25 +244,15 @@ module score_screen_text #(
     // -------------------------------
     // Merging RGB outputs
     // -------------------------------
-    logic [11:0] rgb_nxt;
     always_comb begin
-        rgb_nxt = rgb_in;
-        // LEFT
-        for (int i = 0; i < LEN_SCORE; i++)
-            if (draw_rgb_left[i] != rgb_in) rgb_nxt = draw_rgb_left[i];
-        // RIGHT
-        for (int i = 0; i < LEN_SCORE; i++)
-            if (draw_rgb_right[i] != rgb_in) rgb_nxt = draw_rgb_right[i];
-        // RESULT
-        for (int i = 0; i < LEN_RESULT_MAX; i++)
-            if (draw_rgb_result[i] != rgb_in) rgb_nxt = draw_rgb_result[i];
-    end
-
-    always_ff @(posedge clk) begin
-        if (rst)
-            rgb_out <= 12'h000;
-        else
-            rgb_out <= rgb_nxt;
+        rgb_out = rgb_in;
+        for (ii = 0; ii < LEN_SCORE; ii++) begin
+            if (draw_rgb_left[ii]  != rgb_in) rgb_out = draw_rgb_left[ii];
+            if (draw_rgb_right[ii] != rgb_in) rgb_out = draw_rgb_right[ii];
+        end
+        for (ii = 0; ii < LEN_RESULT; ii++) begin
+            if (draw_rgb_result[ii] != rgb_in) rgb_out = draw_rgb_result[ii];
+        end
     end
 
 endmodule

@@ -8,6 +8,7 @@
 module game_controller (
     input  logic clk,
     input  logic rst,
+    input logic kb_reset_edge,
     input  logic me_ready,
     input  logic game_over_flag,
     input  logic block_placed,
@@ -57,7 +58,7 @@ module game_controller (
                     next_state = SCORE;
     
             SCORE:
-                if (me_ready)
+                if (kb_reset_edge)
                     next_state = START_SCREEN;
         endcase
     end

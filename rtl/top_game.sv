@@ -59,8 +59,14 @@ module top_game (
         .kb_left(kb_left),
         .kb_right(kb_right),
         .kb_start(kb_start),
-        .kb_falling(kb_falling)
+        .kb_falling(kb_falling),
+        .kb_reset(kb_reset)
     );
+
+    logic kb_reset_prev, kb_reset_edge;
+
+    always_ff @(posedge clk) kb_reset_prev <= kb_reset;
+    assign kb_reset_edge = kb_reset & ~kb_reset_prev;
 
     always_ff @(posedge clk) kb_start_prev <= kb_start;
     assign kb_start_edge = kb_start & ~kb_start_prev;
@@ -129,6 +135,7 @@ end
     game_controller u_game_controller (
         .clk(clk),
         .rst(rst),
+        .kb_reset_edge(kb_reset_edge),
         .me_ready(kb_start_flag),
         .other_ready(other_ready),
         .game_over_flag(game_over_flag),
@@ -229,14 +236,14 @@ end
         .tx(tx)
     );
 
-    always_ff @(posedge clk or posedge rst) begin
+    always_ff @(posedge clk) begin
         if (rst)
             other_ready <= 1'b0;
         else
             other_ready <= uart_data_received[7];
     end
 
-    always_ff @(posedge clk or posedge rst) begin
+    always_ff @(posedge clk) begin
         if (rst)
             enemy_score <= 16'd0;
         else

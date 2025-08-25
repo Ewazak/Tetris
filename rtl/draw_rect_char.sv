@@ -6,15 +6,15 @@
 * Description: draw_rect_char module - draws a single ASCII character at a given position.
 */
 module draw_rect_char #(
-    parameter int ORIGIN_X = 100,
-    parameter int ORIGIN_Y = 100,
-    parameter int CHAR_WIDTH  = 8,
-    parameter int CHAR_HEIGHT = 16,
-    parameter int SCALE = 1
+    parameter ORIGIN_X = 100,
+    parameter ORIGIN_Y = 100,
+    parameter CHAR_WIDTH  = 8,
+    parameter CHAR_HEIGHT = 16,
+    parameter SCALE = 1
 )(
     input  logic clk,
     input  logic rst,
-    input  logic [6:0] char_code,
+    input  logic [7:0] char_line_pixels,   // 8-bit font row
     // VGA input signals
     input  logic [10:0] hcount,
     input  logic [10:0] vcount,
@@ -25,20 +25,10 @@ module draw_rect_char #(
     output logic [11:0] rgb_out
 );
 
-    logic [3:0] char_line;
     logic [2:0] pixel_bit;
-    logic [7:0] char_line_pixels;
     logic [11:0] rgb_nxt;
 
-    assign char_line = ((vcount - ORIGIN_Y)/SCALE) % CHAR_HEIGHT;
     assign pixel_bit = 7 - (((hcount - ORIGIN_X)/SCALE) % CHAR_WIDTH);
-
-// Font ROM instance
-    font_rom rom_inst (
-        .clk(clk),
-        .addr({char_code, char_line}),
-        .char_line_pixels(char_line_pixels)
-    );
 
     always_comb begin
         if (vblnk || hblnk) begin

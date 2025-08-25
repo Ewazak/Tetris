@@ -145,8 +145,41 @@
         .out(vga_start_screen)
     );
 
-    logic [11:0] start_text_rgb;
+// -----------------------------
+// Arbiter and font_rom
+// -----------------------------
+    localparam int FONT_CLIENTS = 7;
+    logic [FONT_CLIENTS-1:0]       font_req;
+    logic [10:0]                   font_addr_arr [0:FONT_CLIENTS-1];
+    logic [7:0]                    font_data;
+    logic [FONT_CLIENTS-1:0]       font_grant_onehot;
+    logic                          font_data_valid;
+    logic [10:0]                   font_rom_addr;
+    logic                          font_rom_req;
 
+    font_arbiter #(.NCLIENTS(FONT_CLIENTS)) u_font_arb (
+        .clk(clk),
+        .rst(rst),
+        .req(font_req),
+        .addr(font_addr_arr),
+        .rom_addr(font_rom_addr),
+        .rom_req(font_rom_req),
+        .rom_data(font_data),
+        .grant_onehot(font_grant_onehot),
+        .data_valid(font_data_valid)
+    );
+
+    // single font ROM
+    font_rom font_mem_inst (
+        .clk(clk),
+        .addr(font_rom_addr),
+        .char_line_pixels(font_data)
+    );
+
+    // -----------------------------
+    // Text instances
+    // -----------------------------
+    logic [11:0] start_text_rgb;
     draw_text #(
         .SCALE(4),
         .FROM_MIDDLE(35),
@@ -160,6 +193,10 @@
         .hblnk(hblnk),
         .vblnk(vblnk),
         .rgb_in(vga_start_screen.rgb),
+        .font_req(font_req[0]),
+        .font_addr(font_addr_arr[0]),
+        .font_data(font_data),
+        .font_grant(font_grant_onehot[0]),
         .rgb_out(start_text_rgb)
     );
 
@@ -178,6 +215,10 @@
         .hblnk(hblnk),
         .vblnk(vblnk),
         .rgb_in(vga_start_screen.rgb),
+        .font_req(font_req[1]),
+        .font_addr(font_addr_arr[1]),
+        .font_data(font_data),
+        .font_grant(font_grant_onehot[1]),
         .rgb_out(waiting_text_rgb)
     );
 
@@ -231,6 +272,10 @@
         .hblnk(hblnk),
         .vblnk(vblnk),
         .rgb_in(vga_game_over.rgb),
+        .font_req(font_req[2]),
+        .font_addr(font_addr_arr[2]),
+        .font_data(font_data),
+        .font_grant(font_grant_onehot[2]),
         .rgb_out(game_over_text_rgb)
     );
 
@@ -248,6 +293,10 @@
         .hblnk(hblnk),
         .vblnk(vblnk),
         .rgb_in(vga_game_over.rgb),
+        .font_req(font_req[3]),
+        .font_addr(font_addr_arr[3]),
+        .font_data(font_data),
+        .font_grant(font_grant_onehot[3]),
         .rgb_out(waiting_for_end_text_rgb)
     );
 
@@ -268,10 +317,42 @@
         .hblnk_in(hblnk),
         .out(vga_score_screen)
     );
-    
-// -----------------------------
-// Points & Player indicator
-// -----------------------------
+
+    // -----------------------------
+    // Score
+    // -----------------------------
+    logic [15:0] my_score_sync, enemy_score_sync;
+
+    always_ff @(posedge clk) begin
+    my_score_sync    <= my_score;
+    enemy_score_sync <= enemy_score;
+    end
+
+    logic [11:0] score_screen_text_rgb;
+
+    score_screen_text #(
+        .SCALE(2)
+    ) u_score_screen_text (
+        .clk(clk),
+        .rst(rst),
+        .hcount(hcount),
+        .vcount(vcount),
+        .hblnk(hblnk),
+        .vblnk(vblnk),
+        .rgb_in(vga_score_screen.rgb),
+        .my_score(my_score_sync),
+        .enemy_score(enemy_score_sync),
+        .is_player1(is_player1),
+        .font_req(font_req[4]),
+        .font_addr(font_addr_arr[4]),
+        .font_data(font_data),
+        .font_grant(font_grant_onehot[4]),
+        .rgb_out(score_screen_text_rgb)
+    );
+
+    // -----------------------------
+    // Points & Player indicator
+    // -----------------------------
     logic [11:0] vga_game_ff;
     always_ff @(posedge clk or posedge rst)
         vga_game_ff <= rst ? 12'h000 : vga_game.rgb;
@@ -286,6 +367,10 @@
         .hblnk(hblnk),
         .vblnk(vblnk),
         .rgb_in(vga_game_ff),
+        .font_req(font_req[5]),
+        .font_addr(font_addr_arr[5]),
+        .font_data(font_data),
+        .font_grant(font_grant_onehot[5]),
         .rgb_out(points_rgb)
     );
 
@@ -300,6 +385,10 @@
         .hblnk(hblnk), .vblnk(vblnk),
         .rgb_in(points_rgb_ff),
         .is_player1(is_player1),
+        .font_req(font_req[6]),
+        .font_addr(font_addr_arr[6]),
+        .font_data(font_data),
+        .font_grant(font_grant_onehot[6]),
         .rgb_out(player_text_rgb)
     );
     logic [11:0] player_text_rgb_ff;
@@ -322,7 +411,6 @@
     // -----------------------------
     logic [11:0] start_screen_rgb_reg;
     logic [11:0] game_over_screen_rgb_reg;
-    logic [11:0] score_screen_rgb_reg;
 
     always_ff @(posedge clk) begin
         if (rst)
@@ -355,15 +443,6 @@
             game_over_screen_rgb_reg <= 12'h000;
     end
 
-    always_ff @(posedge clk) begin
-        if (rst)
-            score_screen_rgb_reg <= 12'h000;
-        else if (in_score)
-            score_screen_rgb_reg <= points_rgb_ff;
-        else
-            score_screen_rgb_reg <= 12'h000;
-    end
-
     // -----------------------------
     // MUX RGB
     // -----------------------------
@@ -380,7 +459,7 @@
         else if (in_game_over)
             final_rgb = game_over_screen_rgb_reg;
         else if (in_score)
-            final_rgb = score_screen_rgb_reg;
+            final_rgb = score_screen_text_rgb;
         else
             final_rgb = 12'h000;
     end
