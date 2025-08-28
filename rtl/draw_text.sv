@@ -9,8 +9,7 @@ module draw_text #(
     parameter SCALE       = 4,
     parameter LEN         = 5,
     parameter string LINE = "ERROR",   
-    parameter FROM_MIDDLE = 35,
-    parameter LATENCY     = 2
+    parameter FROM_MIDDLE = 35
 )(
     input  logic clk,
     input  logic rst,
@@ -47,47 +46,46 @@ module draw_text #(
     localparam TEXT_ORIGIN_X     = (HOR_PIXELS - TEXT_PIXEL_WIDTH)/2;
     localparam TEXT_ORIGIN_Y     = VER_PIXELS/2 + FROM_MIDDLE;
 
-    // Register with font data
-    logic [7:0] font_data_reg;
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst) font_data_reg <= 8'h00;
-        else if (font_grant) font_data_reg <= font_data;
+    // Font bufor
+    logic [7:0] font_data_buf [0:LEN-1][0:CHAR_H-1];
+    logic [$clog2(LEN)-1:0] idx;
+    logic [3:0] line_num;
+    logic loading;
+
+    typedef enum logic [1:0] {IDLE, LOAD} state_t;
+    state_t state;
+    integer char_i;
+    integer line_i;
+
+    always_ff @(posedge clk) begin
+        if (rst) begin state <= LOAD;
+            char_i <= 0;
+            line_i <= 0;
+        end else begin
+            case (state)
+                LOAD: begin
+                    if (font_grant) begin
+                        font_data_buf[char_i][line_i] <= font_data;
+                        if (line_i == CHAR_H-1) begin
+                            line_i <= 0;
+                            if (char_i == LEN-1) begin
+                                char_i <= 0;
+                                state <= IDLE;
+                            end else begin
+                                char_i <= char_i + 1;
+                            end
+                        end else begin
+                            line_i <= line_i + 1;
+                        end
+                    end
+                end
+                default: ; // IDLE
+            endcase
+        end
     end
 
-    function automatic void future_pos(input integer add, input integer cur_h, input integer cur_v,
-                                       output integer out_h, output integer out_v);
-        integer nh; integer nv;
-        nh = cur_h + add; nv = cur_v;
-        if (nh >= HOR_PIXELS) begin
-            nh = nh - HOR_PIXELS;
-            nv = nv + 1;
-        end
-        out_h = nh; out_v = nv;
-    endfunction
-
-    // Compute request for font
-    logic req_local;
-    logic [10:0] addr_local;
-    integer ph; integer pv; integer idx; integer line_num;
-    always_comb begin
-        req_local = 1'b0;
-        addr_local = 11'd0;
-        ph = 0; pv = 0; idx = 0; line_num = 0;
-        future_pos(LATENCY, hcount, vcount, ph, pv);
-
-        if (pv >= TEXT_ORIGIN_Y && pv < TEXT_ORIGIN_Y + CHAR_H*SCALE) begin
-            if (ph >= TEXT_ORIGIN_X && ph < TEXT_ORIGIN_X + LEN*CHAR_W*SCALE) begin
-                idx = (ph - TEXT_ORIGIN_X) / (CHAR_W*SCALE);
-                line_num = ((pv - TEXT_ORIGIN_Y)/SCALE) % CHAR_H;
-                req_local = 1'b1;
-                addr_local = { TEXT[idx], line_num[3:0] };
-            end
-        end
-    end
-
-    assign font_req  = req_local;
-    assign font_addr = addr_local;
-
+    assign font_req = (state == LOAD);
+    assign font_addr = { TEXT[char_i], line_i[3:0] };
 
     logic [11:0] draw_rgb [0:LEN-1];
 
@@ -101,7 +99,7 @@ module draw_text #(
             ) draw_inst (
                 .clk(clk),
                 .rst(rst),
-                .char_line_pixels(font_data_reg),
+                .char_line_pixels(font_data_buf[gi][(vcount - TEXT_ORIGIN_Y)/SCALE % CHAR_H]),
                 .hcount(hcount),
                 .vcount(vcount),
                 .hblnk(hblnk),

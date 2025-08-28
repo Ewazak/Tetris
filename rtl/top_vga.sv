@@ -395,16 +395,15 @@
     always_ff @(posedge clk or posedge rst)
         player_text_rgb_ff <= rst ? 12'h000 : player_text_rgb;
 
-    logic [11:0] board_rgb_ff, block_rgb_ff;
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst) begin
-            board_rgb_ff <= 12'h000;
-            block_rgb_ff <= 12'h000;
-        end else begin
-            board_rgb_ff <= is_board_pixel_drawn ? board_rgb : player_text_rgb_ff;
-            block_rgb_ff <= is_block_pixel_drawn ? block_rgb : board_rgb_ff;
-        end
-    end
+    logic [11:0] board_rgb_ff;
+    always_ff @(posedge clk or posedge rst)
+        board_rgb_ff <= rst ? 12'h000
+                            : (is_board_pixel_drawn ? board_rgb : player_text_rgb_ff);
+
+    logic [11:0] block_rgb_ff;
+    always_ff @(posedge clk or posedge rst)
+        block_rgb_ff <= rst ? 12'h000
+                            : (is_block_pixel_drawn ? block_rgb : board_rgb_ff);
 
     // -----------------------------
     // Pipeline: ready screen images
@@ -412,35 +411,28 @@
     logic [11:0] start_screen_rgb_reg;
     logic [11:0] game_over_screen_rgb_reg;
 
-    always_ff @(posedge clk) begin
-        if (rst)
-            start_screen_rgb_reg <= 12'h000;
-        else if (in_start_screen) begin
-            // First player hasn't pressed ENTER yet
-            if (!kb_start_flag && !other_ready)
-                start_screen_rgb_reg <= start_text_rgb;
-            // One ready, other not
-            else if ((kb_start_flag && !other_ready) || (!kb_start_flag && other_ready))
-                start_screen_rgb_reg <= waiting_text_rgb;
-            // Both ready
+    always_comb begin
+        if (in_start_screen) begin
+            if (!kb_start_flag)
+                start_screen_rgb_reg = start_text_rgb;
+            else if (!other_ready)
+                start_screen_rgb_reg = vga_start_screen.rgb | waiting_text_rgb;
             else
-                start_screen_rgb_reg <= vga_start_screen.rgb;
+                start_screen_rgb_reg = vga_start_screen.rgb;
         end else
-            start_screen_rgb_reg <= 12'h000;
+            start_screen_rgb_reg = 12'h000;
     end
 
-    always_ff @(posedge clk) begin
-        if (rst)
-            game_over_screen_rgb_reg <= 12'h000;
-        else if (in_game_over) begin
-            if (!kb_start_flag && !other_ready)
-                game_over_screen_rgb_reg <= game_over_text_rgb;
-            else if (kb_start_flag && !other_ready)
-                game_over_screen_rgb_reg <= waiting_for_end_text_rgb;
+    always_comb begin
+        if (in_game_over) begin
+            if (!kb_start_flag)
+                game_over_screen_rgb_reg = game_over_text_rgb;         // lokalny nie kliknął
+            else if (!other_ready)
+                game_over_screen_rgb_reg = vga_game_over.rgb | waiting_for_end_text_rgb; // nakłada się na tło
             else
-                game_over_screen_rgb_reg <= vga_game_over.rgb;
+                game_over_screen_rgb_reg = vga_game_over.rgb;         // obaj gotowi
         end else
-            game_over_screen_rgb_reg <= 12'h000;
+            game_over_screen_rgb_reg = 12'h000;
     end
 
     // -----------------------------
@@ -449,20 +441,17 @@
     logic [11:0] final_rgb;
 
     always_comb begin
-
+    if (in_start_screen)
+        final_rgb = start_screen_rgb_reg;
+    else if (in_game)
+        final_rgb = block_rgb_ff;
+    else if (in_game_over)
+        final_rgb = game_over_screen_rgb_reg;
+    else if (in_score)
+        final_rgb = score_screen_text_rgb;
+    else
         final_rgb = 12'h000;
-
-        if (in_start_screen)
-            final_rgb = start_screen_rgb_reg;
-        else if (in_game)
-            final_rgb = block_rgb_ff;
-        else if (in_game_over)
-            final_rgb = game_over_screen_rgb_reg;
-        else if (in_score)
-            final_rgb = score_screen_text_rgb;
-        else
-            final_rgb = 12'h000;
-    end
+end
 
     // -----------------------------
     // VGA outputs

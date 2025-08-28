@@ -1,3 +1,11 @@
+/**
+* 2025  AGH University of Science and Technology
+* MTM UEC2
+* Author: Ewa Żakowska, Adrianna Solińska
+*
+* Description: font_arbiter module - arbitrates multiple font clients requesting
+* character lines from a single font ROM.
+*/
 module font_arbiter #(
     parameter NCLIENTS = 8
 )(
