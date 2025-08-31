@@ -1,11 +1,13 @@
-/**
-* 2025  AGH University of Science and Technology
-* MTM UEC2
-* Author: Ewa Żakowska, Adrianna Solińska
-*
-* Description: score_screen_text module - displays the score screen text 
-*              (players scores and match result).
-*/
+//////////////////////////////////////////////////////////////////////////////
+/*
+ 2025  AGH University of Science and Technology
+ MTM UEC2
+ Module name:   score_screen_text
+ Author:        Ewa Żakowska, Adrianna Solińska
+ Description:  displays the score screen text 
+               (players scores and match result).
+ */
+//////////////////////////////////////////////////////////////////////////////
 module score_screen_text #(
     parameter SCALE = 3,
     parameter LATENCY = 2
@@ -31,17 +33,28 @@ module score_screen_text #(
 );
     import vga_pkg::*;
 
+//------------------------------------------------------------------------------
+// local parameters
+//------------------------------------------------------------------------------
     localparam LEN_SCORE   = 15;
     localparam LEN_RESULT = 12;
-
+    localparam CHAR_W = 8;
+    localparam CHAR_H = 16;
+    localparam int X_ORIGIN = (HOR_PIXELS - LEN_SCORE*CHAR_W*SCALE)/2;
+    localparam int X_RESULT = (HOR_PIXELS - LEN_RESULT*CHAR_W*SCALE)/2;
+    localparam int Y_SCORE1 = 220;
+    localparam int Y_SCORE2 = Y_SCORE1 + CHAR_H*SCALE + 40;
+    localparam int Y_RESULT = Y_SCORE2 + CHAR_H*SCALE + 60;
+    
+//------------------------------------------------------------------------------
+// local variables
+//------------------------------------------------------------------------------
     localparam logic [6:0] PLAYER1_LABEL [0:LEN_SCORE-1] = {
         "P","L","A","Y","E","R"," ","1",":"," ","0","0","0","0","0"
     };
     localparam logic [6:0] PLAYER2_LABEL [0:LEN_SCORE-1] = {
         "P","L","A","Y","E","R"," ","2",":"," ","0","0","0","0","0"
     };
-
-    // Final result
     localparam logic [6:0] RESULT_WIN1 [0:LEN_RESULT-1] = {
         "P","L","A","Y","E","R"," ","1"," ","W","O","N"
     };
@@ -52,12 +65,30 @@ module score_screen_text #(
         " "," "," "," ","D","R","A","W"," "," "," "," "
     };
 
-    // -------------------------------
-    // Score conversion from binary to ASCII digits
-    // -------------------------------
     logic [6:0] my_ascii [0:4];
     logic [6:0] enemy_ascii [0:4];
+    logic [6:0] text_left  [0:LEN_SCORE-1];
+    logic [6:0] text_right [0:LEN_SCORE-1];
+    logic [6:0] text_result[0:LEN_RESULT-1];
+    integer ii;
+    logic [11:0] draw_rgb_left  [0:LEN_SCORE-1];
+    logic [11:0] draw_rgb_right [0:LEN_SCORE-1];
+    logic [11:0] draw_rgb_result[0:LEN_RESULT-1];
+    logic [7:0] font_data_reg;
+    logic req_local;
+    logic [10:0] addr_local;
+    integer ph,pv,idx,line;
 
+//------------------------------------------------------------------------------
+// output register with sync reset
+//------------------------------------------------------------------------------
+// This module's output is registered, but it does not use a reset signal.
+// The logic is implemented in a separate always_ff block for clarity.
+
+//------------------------------------------------------------------------------
+// logic
+//------------------------------------------------------------------------------
+    // Score conversion from binary to ASCII digits
     bin_ascii_sync u_my_score_ascii (
         .clk(clk), .rst(rst),
         .bin_in(my_score),
@@ -78,12 +109,7 @@ module score_screen_text #(
         .ascii_4(enemy_ascii[4])
     );
 
-    logic [6:0] text_left  [0:LEN_SCORE-1];
-    logic [6:0] text_right [0:LEN_SCORE-1];
-    logic [6:0] text_result[0:LEN_RESULT-1];
-
-    integer ii;
-    always_comb begin
+    always_comb begin : score_to_text_comb
         if (is_player1) begin
             for (ii = 0; ii < LEN_SCORE; ii = ii + 1) begin
                 text_left[ii]  = PLAYER1_LABEL[ii];
@@ -117,26 +143,15 @@ module score_screen_text #(
         end
     end
 
-    localparam CHAR_W = 8;
-    localparam CHAR_H = 16;
-
-    localparam int X_ORIGIN = (HOR_PIXELS - LEN_SCORE*CHAR_W*SCALE)/2;
-    localparam int X_RESULT = (HOR_PIXELS - LEN_RESULT*CHAR_W*SCALE)/2;
-
-    localparam int Y_SCORE1 = 220;
-    localparam int Y_SCORE2 = Y_SCORE1 + CHAR_H*SCALE + 40;
-    localparam int Y_RESULT = Y_SCORE2 + CHAR_H*SCALE + 60;
-
-    logic [11:0] draw_rgb_left  [0:LEN_SCORE-1];
-    logic [11:0] draw_rgb_right [0:LEN_SCORE-1];
-    logic [11:0] draw_rgb_result[0:LEN_RESULT-1];
-
-    logic [7:0] font_data_reg;
-    always_ff @(posedge clk) begin
-        if (rst) font_data_reg <= 8'h00;
-        else if (font_grant) font_data_reg <= font_data;
+    // Pipeline stages
+    always_ff @(posedge clk) begin : font_data_reg_blk
+        if (rst) begin
+            font_data_reg <= 8'h00;
+        end else begin
+            if (font_grant) font_data_reg <= font_data;
+        end
     end
-
+    
     function automatic void future_pos(input int add, input int cur_h, input int cur_v,
                                        output int out_h, output int out_v);
         int nh; int nv;
@@ -145,10 +160,7 @@ module score_screen_text #(
         out_h = nh; out_v = nv;
     endfunction
 
-    logic req_local;
-    logic [10:0] addr_local;
-    integer ph,pv,idx,line;
-    always_comb begin
+    always_comb begin : font_addr_comb
         req_local  = 0;
         addr_local = 0;
         future_pos(LATENCY, hcount, vcount, ph, pv);
@@ -169,7 +181,6 @@ module score_screen_text #(
             req_local  = 1;
             addr_local = { text_right[idx], line[3:0] };
         end
-
         // RESULT
         else if (pv >= Y_RESULT && pv < Y_RESULT + CHAR_H*SCALE &&
                  ph >= X_RESULT && ph < X_RESULT + LEN_RESULT*CHAR_W*SCALE) begin
@@ -186,7 +197,7 @@ module score_screen_text #(
     genvar gi;
     generate
         // Local player
-        for (gi = 0; gi < LEN_SCORE; gi++) begin
+        for (gi = 0; gi < LEN_SCORE; gi++) begin : draw_left_loop
             draw_rect_char #(
                 .ORIGIN_X(X_ORIGIN + gi*CHAR_W*SCALE),
                 .ORIGIN_Y(Y_SCORE1),
@@ -204,7 +215,7 @@ module score_screen_text #(
             );
         end
         // Rival player
-        for (gi = 0; gi < LEN_SCORE; gi++) begin
+        for (gi = 0; gi < LEN_SCORE; gi++) begin : draw_right_loop
             draw_rect_char #(
                 .ORIGIN_X(X_ORIGIN + gi*CHAR_W*SCALE),
                 .ORIGIN_Y(Y_SCORE2),
@@ -222,7 +233,7 @@ module score_screen_text #(
             );
         end
     // RESULT (centered)
-        for (gi = 0; gi < LEN_RESULT; gi++) begin
+        for (gi = 0; gi < LEN_RESULT; gi++) begin : draw_result_loop
             draw_rect_char #(
                 .ORIGIN_X(X_RESULT + gi*CHAR_W*SCALE),
                 .ORIGIN_Y(Y_RESULT),
@@ -241,10 +252,8 @@ module score_screen_text #(
         end
     endgenerate
 
-    // -------------------------------
     // Merging RGB outputs
-    // -------------------------------
-    always_comb begin
+    always_comb begin : merge_rgb_comb
         rgb_out = rgb_in;
         for (ii = 0; ii < LEN_SCORE; ii++) begin
             if (draw_rgb_left[ii]  != rgb_in) rgb_out = draw_rgb_left[ii];
@@ -254,5 +263,4 @@ module score_screen_text #(
             if (draw_rgb_result[ii] != rgb_in) rgb_out = draw_rgb_result[ii];
         end
     end
-
 endmodule

@@ -1,11 +1,12 @@
-/**
-* 2025  AGH University of Science and Technology
-* MTM UEC2
-* Author: Ewa Żakowska, Adrianna Solińska
-*
-* Description: board_renderer module - renders the game board by mapping pixel
-*              coordinates to board cells and coloring non-empty ones.
-*/
+//////////////////////////////////////////////////////////////////////////////
+/*
+ 2025  AGH University of Science and Technology
+ MTM UEC2
+ Module name:  board_renderer
+ Author:        Ewa Żakowska, Adrianna Solińska
+ Description:  Renders the game board by mapping pixel coordinates to board cells and coloring non-empty ones.
+ */
+//////////////////////////////////////////////////////////////////////////////
 module board_renderer #(
     parameter BLOCK_SIZE = 32,
     parameter BOARD_X = 100, // X position of the board
@@ -18,12 +19,18 @@ module board_renderer #(
     output logic is_board_pixel_drawn    // flag indicating if a board cell pixel is drawn
 );
 
+//------------------------------------------------------------------------------
+// local parameters
+//------------------------------------------------------------------------------
     localparam BOARD_WIDTH_BLOCKS  = 10;
     localparam BOARD_HEIGHT_BLOCKS = 20;
     localparam BOARD_W_PIXELS = BOARD_WIDTH_BLOCKS * BLOCK_SIZE;
     localparam BOARD_H_PIXELS = BOARD_HEIGHT_BLOCKS * BLOCK_SIZE;
     localparam BORDER = 3;   // width
 
+//------------------------------------------------------------------------------
+// local variables
+//------------------------------------------------------------------------------
     logic in_board_area;
     logic on_border;
     logic [3:0] block_x;
@@ -31,7 +38,10 @@ module board_renderer #(
     integer board_idx;
     logic [2:0] cells;
 
-    always_comb begin
+//------------------------------------------------------------------------------
+// logic
+//------------------------------------------------------------------------------
+    always_comb begin : board_renderer_comb
         // Is pixel in board area
         in_board_area = (hcount >= BOARD_X) && (hcount < BOARD_X + BOARD_W_PIXELS) &&
                         (vcount >= BOARD_Y) && (vcount < BOARD_Y + BOARD_H_PIXELS);

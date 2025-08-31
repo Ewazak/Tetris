@@ -1,19 +1,27 @@
-/**
-* 2025  AGH University of Science and Technology
-* MTM UEC2
-* Author: Ewa Żakowska, Adrianna Solińska
-*
-* Description: block_generator module - generates a 4x4 block map for a given type and rotation.
-*/
+//////////////////////////////////////////////////////////////////////////////
+/*
+ 2025  AGH University of Science and Technology
+ MTM UEC2
+ Module name:  block_generator
+ Author:        Ewa Żakowska, Adrianna Solińska
+ Description:  Generates a 4x4 block map for a given type and rotation.
+ */
+//////////////////////////////////////////////////////////////////////////////
 module block_generator (
     input  logic [2:0] block_type,    // block type(0..6)
     input  logic [1:0] rotation,      // rotation (0..3)
     output logic [3:0][3:0] block_map // 4x4 block field: 1 = occupied, 0 = empty
 );
 
+//------------------------------------------------------------------------------
+// local variables
+//------------------------------------------------------------------------------
     integer x, y;
 
-    always_comb begin
+//------------------------------------------------------------------------------
+// logic
+//------------------------------------------------------------------------------
+    always_comb begin : block_generator_comb
         // everything empty by default
         for (y = 0; y < 4; y = y + 1)
             for (x = 0; x < 4; x = x + 1)

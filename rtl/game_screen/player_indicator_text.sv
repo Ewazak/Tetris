@@ -1,10 +1,12 @@
-/**
-* 2025  AGH University of Science and Technology
-* MTM UEC2
-* Author: Ewa Żakowska, Adrianna Solińska
-*
-* Description: player_indicator_text module - displays "PLAYER 1" or "PLAYER 2" label depending on the signal.
-*/
+//////////////////////////////////////////////////////////////////////////////
+/*
+ 2025  AGH University of Science and Technology
+ MTM UEC2
+ Module name:   player_indicator_text
+ Author:        Ewa Żakowska, Adrianna Solińska
+ Description:  displays "PLAYER 1" or "PLAYER 2" label depending on the signal.
+ */
+//////////////////////////////////////////////////////////////////////////////
 module player_indicator_text #(
     parameter SCALE = 2,
     parameter LATENCY = 2
@@ -17,7 +19,7 @@ module player_indicator_text #(
     input  logic        vblnk,
     input  logic [11:0] rgb_in,
 
-    input  logic        is_player1, // 1 → player1, 0 → player2
+    input  logic        is_player1, // 1 -> player1, 0 -> player2
 
     // font bus
     output logic        font_req,
@@ -30,10 +32,18 @@ module player_indicator_text #(
 
     import vga_pkg::*;
 
-    // -----------------------------
-    // Player text definitions
-    // -----------------------------
+//------------------------------------------------------------------------------
+// local parameters
+//------------------------------------------------------------------------------
+    localparam CHAR_W = 8;
+    localparam CHAR_H = 16;
+    localparam ORIGIN_Y = 20;
     localparam LEN = 8;
+    localparam ORIGIN_X = (HOR_PIXELS - LEN*CHAR_W*SCALE)/2;
+
+//------------------------------------------------------------------------------
+// local variables
+//------------------------------------------------------------------------------
     localparam logic [6:0] TEXT_PLAYER1 [0:LEN-1] = {
         "P","L","A","Y","E","R"," ","1"
     };
@@ -43,33 +53,31 @@ module player_indicator_text #(
 
     logic [6:0] text_mem [0:LEN-1];
     integer i;
-    always_comb for (i = 0; i < LEN; i = i + 1) text_mem[i] = is_player1 ? TEXT_PLAYER1[i] : TEXT_PLAYER2[i];
-
-    logic [11:0] draw_rgb [0:LEN-1];
-
     logic [7:0] font_data_reg;
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst) font_data_reg <= 8'h00;
-        else if (font_grant) font_data_reg <= font_data;
-    end
-
-    function automatic void future_pos(input integer add, input integer cur_h, input integer cur_v,
-                                       output integer out_h, output integer out_v);
-        integer nh; integer nv;
-        nh = cur_h + add; nv = cur_v;
-        if (nh >= HOR_PIXELS) begin nh = nh - HOR_PIXELS; nv = nv + 1; end
-        out_h = nh; out_v = nv;
-    endfunction
-
-    // Compute address
     logic req_local;
     logic [10:0] addr_local;
-    localparam CHAR_W = 8;
-    localparam CHAR_H = 16;
-    localparam ORIGIN_Y = 20;
-    localparam ORIGIN_X = (HOR_PIXELS - LEN*CHAR_W*SCALE)/2;
-    integer ph; integer pv; integer idx; integer line;
-    always_comb begin
+    integer ph;
+    integer pv;
+    integer idx;
+    integer line;
+    logic [11:0] draw_rgb [0:LEN-1];
+    logic [11:0] rgb_out_nxt;
+
+//------------------------------------------------------------------------------
+// output register with sync reset
+//------------------------------------------------------------------------------
+// This module does not have a single registered output, but a combinational one
+// so this block is not used.
+
+//------------------------------------------------------------------------------
+// logic
+//------------------------------------------------------------------------------
+    always_comb for (i = 0; i < LEN; i = i + 1) begin : player_text_comb
+        text_mem[i] = is_player1 ? TEXT_PLAYER1[i] : TEXT_PLAYER2[i];
+    end
+
+    // Compute address
+    always_comb begin : font_addr_comb
         req_local = 1'b0;
         addr_local = 11'd0;
         ph = 0; pv = 0; idx = 0; line = 0;
@@ -85,9 +93,37 @@ module player_indicator_text #(
         end
     end
 
+    // Merge character RGB into final output
+    always_comb begin : output_rgb_comb
+        rgb_out = rgb_in;
+        for (i = 0; i < LEN; i++)
+            if (draw_rgb[i] != rgb_in)
+                rgb_out = draw_rgb[i];
+    end
+
+    // Pipeline stages
+    always_ff @(posedge clk or posedge rst) begin : font_data_reg_blk
+        if (rst) begin : font_data_reg_rst_blk
+            font_data_reg <= 8'h00;
+        end else begin : font_data_reg_run_blk
+            if (font_grant) font_data_reg <= font_data;
+        end
+    end
+    
+    // Assign outputs
     assign font_req  = req_local;
     assign font_addr = addr_local;
 
+    // Helper function
+    function automatic void future_pos(input integer add, input integer cur_h, input integer cur_v,
+                                       output integer out_h, output integer out_v);
+        integer nh; integer nv;
+        nh = cur_h + add; nv = cur_v;
+        if (nh >= HOR_PIXELS) begin nh = nh - HOR_PIXELS; nv = nv + 1; end
+        out_h = nh; out_v = nv;
+    endfunction
+
+    // Draw instances for each character
     genvar gi;
     generate
         for (gi = 0; gi < LEN; gi = gi + 1) begin : gen_text
@@ -108,15 +144,5 @@ module player_indicator_text #(
             );
         end
     endgenerate
-
-    // -----------------------------
-    // Merge character RGB into final output
-    // -----------------------------
-    always_comb begin
-        rgb_out = rgb_in;
-        for (i = 0; i < LEN; i++)
-            if (draw_rgb[i] != rgb_in)
-                rgb_out = draw_rgb[i];
-    end
 
 endmodule

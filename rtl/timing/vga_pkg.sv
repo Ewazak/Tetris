@@ -1,11 +1,13 @@
-/**
- * Copyright (C) 2025  AGH University of Science and Technology
- * MTM UEC2
- * Author: Piotr Kaczmarczyk
- * Modified: Ewa Żakowska, Adrianna Solińska 
- *
- * Description: Package with vga related constants.
+//////////////////////////////////////////////////////////////////////////////
+/*
+ Copyright (C) 2025  AGH University of Science and Technology
+ MTM UEC2
+ Module name:   vga_pkg
+ Author:        Piotr Kaczmarczyk
+ Modified:      Ewa Żakowska, Adrianna Solińska
+ Description:  Package with vga related constants.
  */
+//////////////////////////////////////////////////////////////////////////////
 
  package vga_pkg;
 

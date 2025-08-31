@@ -1,10 +1,12 @@
-/**
-* 2025  AGH University of Science and Technology
-* MTM UEC2
-* Author: Ewa Żakowska, Adrianna Solińska
-*
-* Description: block_draw module - draws a 4x4 block at given position with color based on type.
-*/
+//////////////////////////////////////////////////////////////////////////////
+/*
+ 2025  AGH University of Science and Technology
+ MTM UEC2
+ Module name:   block_draw
+ Author:        Ewa Żakowska, Adrianna Solińska
+ Description:  Draws a 4x4 block at a given position with color based on type.
+ */
+//////////////////////////////////////////////////////////////////////////////
 module block_draw (
     input  logic [10:0] hcount,       // current pixel X
     input  logic [10:0] vcount,       // current pixel Y
@@ -16,12 +18,21 @@ module block_draw (
     output logic is_block_pixel_drawn // flag if block pixel is drawn
 );
 
+//------------------------------------------------------------------------------
+// local parameters
+//------------------------------------------------------------------------------
     localparam BLOCK_SIZE = 32; // size of a single block cell in pixels
 
+//------------------------------------------------------------------------------
+// local variables
+//------------------------------------------------------------------------------
     logic inside_block_area;
     logic [1:0] block_x, block_y;
 
-    always_comb begin
+//------------------------------------------------------------------------------
+// logic
+//------------------------------------------------------------------------------
+    always_comb begin : block_draw_comb
         rgb_out = 12'h000; // black background by default
         is_block_pixel_drawn = 1'b0;
         
@@ -47,9 +58,7 @@ module block_draw (
                     3'd7: rgb_out = 12'h0FF; // cyan (L-block)
                     default: rgb_out = 12'h888; // gray for others
                 endcase
+            end
         end
     end
-end
-
 endmodule
-

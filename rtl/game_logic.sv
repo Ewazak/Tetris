@@ -1,12 +1,14 @@
-/**
-* 2025  AGH University of Science and Technology
-* MTM UEC2
-* Author: Ewa Żakowska, Adrianna Solińska
-*
-* Description: game_logic module - maintains the state of game board, active block position,
-*              detects collision, clears full lines and signals game-over conditions.
-*/
-module game_logic #(
+//////////////////////////////////////////////////////////////////////////////
+/*
+ 2025  AGH University of Science and Technology
+ MTM UEC2
+ Module name:   game_logic
+ Author:        Ewa Żakowska, Adrianna Solińska
+ Description:   Maintains the state of game board, active block position,
+                detects collision, clears full lines and signals game-over conditions.
+ */
+//////////////////////////////////////////////////////////////////////////////
+ module game_logic #(
     parameter BOARD_X = 100,
     parameter BOARD_Y = 50,
     parameter BLOCK_SIZE = 32
@@ -29,92 +31,25 @@ module game_logic #(
     output logic game_over_flag
 );
 
+//------------------------------------------------------------------------------
+// local parameters
+//------------------------------------------------------------------------------
 localparam FALL_LIMIT = 65_000_000;
-logic [31:0] fall_counter;
 
+//------------------------------------------------------------------------------
+// local variables
+//------------------------------------------------------------------------------
+logic [31:0] fall_counter;
 // Previous button states (for edge detection)
 logic move_left_prev, move_right_prev;
 logic block_just_placed;
 
-// -------------------------
-// Collision detection function
-// -------------------------
-function logic check_collision(
-    input int nx,
-    input int ny,
-    input logic [3:0][3:0] shape,
-    input logic [2:0] b [0:199]
-);
-    check_collision = 0;
-    for (int i = 0; i < 4; i++) begin
-        for (int j = 0; j < 4; j++) begin
-            if (shape[i][j]) begin
-                int tx = nx + j;
-                int ty = ny + i;
-                if (tx < 0 || tx >= 10 || ty >= 20) begin
-                    check_collision = 1;
-                end
-                else if (b[ty*10 + tx] != 3'd0) begin
-                    check_collision = 1;
-                end
-            end
-        end
-    end
-endfunction
-
-// -------------------------
-// Place block on the board
-// -------------------------
-task place_block;
-    begin
-        for (int i=0; i<4; i++) begin
-            for (int j=0; j<4; j++) begin
-                if (block_map[i][j]) begin
-                    int idx = (active_y+i)*10 + (active_x+j);
-                    if (idx >= 0 && idx < 200)
-                        board[idx] <= block_type;
-                end
-            end
-        end
-        block_placed <= 1;
-        block_just_placed <= 1;
-    end
-endtask
-
-// -------------------------
-// Line clear detection
-// -------------------------
-task check_and_clear_lines;
-    logic full_row[0:19];
-    begin
-        lines_removed <= 0;
-        for (int row=0; row<20; row++) begin
-            full_row[row] = 1;
-            for (int col=0; col<10; col++) begin
-                if (board[row*10 + col] == 3'd0)
-                    full_row[row] = 0;
-            end
-        end
-
-        for (int row=19; row>=0; row--) begin
-            if (full_row[row]) begin
-                lines_removed <= lines_removed + 1;
-                for (int r=row; r>0; r--) begin
-                    for (int c=0; c<10; c++)
-                        board[r*10 + c] <= board[(r-1)*10 + c];
-                end
-                for (int c=0; c<10; c++)
-                    board[c] <= 3'd0;
-            end
-        end
-    end
-endtask
-
-// -------------------------
-// Main game logic
-// -------------------------
-always_ff @(posedge clk or posedge rst) begin
-    if (rst) begin
+//------------------------------------------------------------------------------
+// output register with sync reset
+//------------------------------------------------------------------------------
+// This block is used for the main game state registers.
+always_ff @(posedge clk) begin : main_game_logic_reg_blk
+    if(rst) begin : main_game_logic_rst_blk
         for (int i = 0; i < 200; i++) board[i] <= 3'd0;
         active_x <= 3;
         active_y <= 0;
@@ -126,7 +61,7 @@ always_ff @(posedge clk or posedge rst) begin
         move_left_prev <= 0;
         move_right_prev <= 0;
     end
-    else begin
+    else begin : main_game_logic_run_blk
         block_placed <= 0;
         lines_removed <= 0;
 
@@ -182,6 +117,78 @@ always_ff @(posedge clk or posedge rst) begin
         end
     end
 end
+
+//------------------------------------------------------------------------------
+// logic
+//------------------------------------------------------------------------------
+
+// Collision detection function
+function logic check_collision(
+    input int nx,
+    input int ny,
+    input logic [3:0][3:0] shape,
+    input logic [2:0] b [0:199]
+);
+    check_collision = 0;
+    for (int i = 0; i < 4; i++) begin
+        for (int j = 0; j < 4; j++) begin
+            if (shape[i][j]) begin
+                int tx = nx + j;
+                int ty = ny + i;
+                if (tx < 0 || tx >= 10 || ty >= 20) begin
+                    check_collision = 1;
+                end
+                else if (b[ty*10 + tx] != 3'd0) begin
+                    check_collision = 1;
+                end
+            end
+        end
+    end
+endfunction
+
+// Place block on the board
+task place_block;
+    begin
+        for (int i=0; i<4; i++) begin
+            for (int j=0; j<4; j++) begin
+                if (block_map[i][j]) begin
+                    int idx = (active_y+i)*10 + (active_x+j);
+                    if (idx >= 0 && idx < 200)
+                        board[idx] <= block_type;
+                end
+            end
+        end
+        block_placed <= 1;
+        block_just_placed <= 1;
+    end
+endtask
+
+// Line clear detection
+task check_and_clear_lines;
+    logic full_row[0:19];
+    begin
+        lines_removed <= 0;
+        for (int row=0; row<20; row++) begin
+            full_row[row] = 1;
+            for (int col=0; col<10; col++) begin
+                if (board[row*10 + col] == 3'd0)
+                    full_row[row] = 0;
+            end
+        end
+
+        for (int row=19; row>=0; row--) begin
+            if (full_row[row]) begin
+                lines_removed <= lines_removed + 1;
+                for (int r=row; r>0; r--) begin
+                    for (int c=0; c<10; c++)
+                        board[r*10 + c] <= board[(r-1)*10 + c];
+                end
+                for (int c=0; c<10; c++)
+                    board[c] <= 3'd0;
+            end
+        end
+    end
+endtask
 
 // Pixel position for renderer
 assign block_pos_x = BOARD_X + (active_x << 5);

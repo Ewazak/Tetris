@@ -1,11 +1,13 @@
-/**
-* 2025  AGH University of Science and Technology
-* MTM UEC2
-* Author: Ewa Żakowska, Adrianna Solińska
-*
-* Description: points_display module - renders the current game score on the screen.
-* It dynamically draws "SCORE:" and the 0–99999 score using draw_rect_char instances.
-*/
+//////////////////////////////////////////////////////////////////////////////
+/*
+ 2025  AGH University of Science and Technology
+ MTM UEC2
+ Module name:   points_display
+ Author:        Ewa Żakowska, Adrianna Solińska
+ Description:  renders the current game score on the screen.
+ It dynamically draws "SCORE:" and the 0–99999 score using draw_rect_char instances.
+ */
+//////////////////////////////////////////////////////////////////////////////
 module points_display #(
     parameter SCALE = 2,
     parameter POS_X = 0,
@@ -30,22 +32,47 @@ module points_display #(
     output logic [11:0] rgb_out
 );
 
-import vga_pkg::*;
+    import vga_pkg::*;
 
-    // -----------------------------
-    // Parameters
-    // -----------------------------
+//------------------------------------------------------------------------------
+// local parameters
+//------------------------------------------------------------------------------
     localparam LEN = 11; // "SCORE:" (6) + 5 digits
+    localparam CHAR_W = 8;
+    localparam CHAR_H = 16;
 
+//------------------------------------------------------------------------------
+// local variables
+//------------------------------------------------------------------------------
     logic [6:0] score_line [0:LEN-1]; 
     logic [11:0] char_rgb [0:LEN-1];
     logic [15:0] tmp;
     integer i;
+    logic [7:0] font_data_reg;
+    logic req_local;
+    logic [10:0] addr_local;
+    integer ph;
+    integer pv;
+    integer idx;
+    integer line;
+    logic [11:0] rgb_nxt;
 
-    // -----------------------------
-    // Generate ASCII for "SCORE:" + digits    
-    // -----------------------------
-    always_comb begin
+//------------------------------------------------------------------------------
+// output register with sync reset
+//------------------------------------------------------------------------------
+    always_ff @(posedge clk) begin : rgb_out_reg_blk
+        if (rst) begin : rgb_out_reg_rst_blk
+            rgb_out <= 12'h000;
+        end else begin : rgb_out_reg_run_blk
+            rgb_out <= rgb_nxt;
+        end
+    end
+
+//------------------------------------------------------------------------------
+// logic
+//------------------------------------------------------------------------------
+    // Generate ASCII for "SCORE:" + digits
+    always_comb begin : score_to_ascii_comb
         // Space
         for (i = 0; i < LEN; i = i + 1)
             score_line[i] = 7'h20;
@@ -66,10 +93,13 @@ import vga_pkg::*;
         end
     end
 
-    logic [7:0] font_data_reg;
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst) font_data_reg <= 8'h00;
-        else if (font_grant) font_data_reg <= font_data;
+    // Pipeline stages
+    always_ff @(posedge clk) begin : font_data_reg_blk
+        if (rst) begin : font_data_reg_rst_blk
+            font_data_reg <= 8'h00;
+        end else begin : font_data_reg_run_blk
+            if (font_grant) font_data_reg <= font_data;
+        end
     end
 
     function automatic void future_pos(input integer add, input integer cur_h, input integer cur_v,
@@ -80,13 +110,8 @@ import vga_pkg::*;
         out_h = nh; out_v = nv;
     endfunction
 
-    // Compute adresess
-    logic req_local;
-    logic [10:0] addr_local;
-    localparam CHAR_W = 8;
-    localparam CHAR_H = 16;
-    integer ph; integer pv; integer idx; integer line;
-    always_comb begin
+    // Compute addresses
+    always_comb begin : font_addr_comb
         req_local = 1'b0;
         addr_local = 11'd0;
         ph = 0; pv = 0; idx = 0; line = 0;
@@ -126,23 +151,12 @@ import vga_pkg::*;
         end
     endgenerate
 
-    // -----------------------------
     // Combining characters into one RGB signal
-    // -----------------------------
-    logic [11:0] rgb_nxt;
-    always_comb begin
+    always_comb begin : merge_rgb_comb
         rgb_nxt = rgb_in;
         for (i = 0; i < LEN; i = i + 1) begin
             if (char_rgb[i] != rgb_in)
                 rgb_nxt = char_rgb[i];
         end
     end
-
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst)
-            rgb_out <= 12'h000;
-        else
-            rgb_out <= rgb_nxt;
-    end
-
 endmodule

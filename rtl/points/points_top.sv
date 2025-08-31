@@ -1,11 +1,13 @@
-/**
-* 2025  AGH University of Science and Technology
-* MTM UEC2
-* Author: Ewa Żakowska, Adrianna Solińska
-*
-* Description: points_top module - top module combining score counter and score display.
-*/
-module points_top(
+//////////////////////////////////////////////////////////////////////////////
+/*
+ 2025  AGH University of Science and Technology
+ MTM UEC2
+ Module name:   points_top
+ Author:        Ewa Żakowska, Adrianna Solińska
+ Description:  top module combining score counter and score display.
+ */
+//////////////////////////////////////////////////////////////////////////////
+module points_top (
     input  logic clk,
     input  logic reset,
     input  logic [2:0] lines_cleared,
@@ -14,9 +16,16 @@ module points_top(
     output vga_if vga_out
 );
 
-    logic [15:0] score;  // the number counted by the counter
+//------------------------------------------------------------------------------
+// local variables
+//------------------------------------------------------------------------------
+    logic [15:0] score;
+    logic [11:0] points_rgb;
 
-// Counter
+//------------------------------------------------------------------------------
+// logic
+//------------------------------------------------------------------------------
+    // Counter
     points_counter u_points_counter (
         .clk(clk),
         .reset(reset),
@@ -25,7 +34,7 @@ module points_top(
         .score(score)
     );
 
-// Display
+    // Display
     points_display u_points_display (
         .clk    (clk),
         .rst    (reset),
