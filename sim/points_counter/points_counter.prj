@@ -1,0 +1,2 @@
+sv work ../../rtl/points/points_counter.sv \
+   points_counter_tb.sv

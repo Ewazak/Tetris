@@ -123,7 +123,7 @@ end
 //------------------------------------------------------------------------------
 
 // Collision detection function
-function logic check_collision(
+function automatic logic check_collision(
     input int nx,
     input int ny,
     input logic [3:0][3:0] shape,
@@ -147,7 +147,7 @@ function logic check_collision(
 endfunction
 
 // Place block on the board
-task place_block;
+task automatic place_block;
     begin
         for (int i=0; i<4; i++) begin
             for (int j=0; j<4; j++) begin
@@ -164,7 +164,7 @@ task place_block;
 endtask
 
 // Line clear detection
-task check_and_clear_lines;
+task  automatic check_and_clear_lines;
     logic full_row[0:19];
     begin
         lines_removed <= 0;

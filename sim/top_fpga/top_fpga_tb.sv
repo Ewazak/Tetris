@@ -66,8 +66,8 @@ module top_fpga_tb;
         .vgaGreen(g),
         .vgaBlue(b),
         .JA1(pclk),
-        .PS2Clk(ps2_clk),
-        .PS2Data(ps2_data)
+        .ps2_clk(ps2_clk),
+        .ps2_data(ps2_data)
     );
 
     tiff_writer #(

@@ -95,6 +95,7 @@ module player_indicator_text #(
 
     // Merge character RGB into final output
     always_comb begin : output_rgb_comb
+        integer i;
         rgb_out = rgb_in;
         for (i = 0; i < LEN; i++)
             if (draw_rgb[i] != rgb_in)

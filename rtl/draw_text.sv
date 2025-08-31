@@ -72,6 +72,7 @@ end
 // logic
 //------------------------------------------------------------------------------
 always_comb begin : ascii_convert_blk
+    integer i;
     for (i = 0; i < LEN; i = i + 1) begin
         if (i < LINE.len()) TEXT[i] = LINE[i];
         else                TEXT[i] = " "; // Space

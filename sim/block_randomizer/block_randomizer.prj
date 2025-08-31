@@ -1,0 +1,2 @@
+sv work ../../rtl/blocks/block_randomizer.sv \
+   block_randomizer_tb.sv

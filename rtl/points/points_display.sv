@@ -73,6 +73,7 @@ module points_display #(
 //------------------------------------------------------------------------------
     // Generate ASCII for "SCORE:" + digits
     always_comb begin : score_to_ascii_comb
+        integer i;
         // Space
         for (i = 0; i < LEN; i = i + 1)
             score_line[i] = 7'h20;

@@ -1,0 +1,2 @@
+sv work ../../rtl/blocks/block_generator.sv \
+    block_generator_tb.sv

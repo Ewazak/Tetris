@@ -1,0 +1,7 @@
+sv work ../../rtl/game_logic.sv \
+        ../../rtl/game_controller.sv \
+        ../../rtl/blocks/block_generator.sv \
+        ../../rtl/blocks/block_randomizer.sv \
+        ../../rtl/points/points_counter.sv \
+        ../../rtl/timing/vga_pkg.sv \
+        game_controller_tb.sv

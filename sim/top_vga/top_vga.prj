@@ -11,7 +11,7 @@
 
 sv work ../../rtl/timing/vga_pkg.sv \
         ../../rtl/timing/vga_timing.sv \
-        ../../rtl/start_screen/draw_start_screen_rom.sv \
+        ../../rtl/start_screen/draw_start_screen.sv \
         ../../rtl/start_screen/start_screen_rom.sv \
         ../../rtl/game_controller.sv \
         ../../rtl/vga_if.sv \
@@ -23,16 +23,31 @@ sv work ../../rtl/timing/vga_pkg.sv \
         ../../rtl/blocks/block_draw.sv \
         ../../rtl/blocks/board_renderer.sv \
         ../../rtl/game_logic.sv \
-        ../../rtl/keyboard_ctl.sv \
         ../../rtl/top_uart.sv \
+        ../../rtl/top_game.sv \
+        ../../rtl/font_arbiter.sv \
+        ../../rtl/draw_text.sv \
+        ../../rtl/game_screen/draw_game_screen.sv \
+        ../../rtl/game_over_screen/draw_game_over_screen.sv \
+        ../../rtl/score_screen/draw_score_screen.sv \
+        ../../rtl/score_screen/score_screen_text.sv \
+        ../../rtl/points/points_display.sv \
+        ../../rtl/game_screen/player_indicator_text.sv \
+        ../../fpga/rtl/Keyboard/KeyboardCtl.sv \
+        ../../fpga/rtl/Keyboard/receiver.sv \
+        ../../fpga/rtl/Keyboard/debounce.sv \
+        ../../rtl/points/points_counter.sv \
+        ../../rtl/game_screen/game_screen_rom.sv \
+        ../../rtl/score_screen/score_screen_rom.sv \
+        ../../rtl/game_over_screen/game_over_screen_rom.sv \
+        ../../rtl/points/bin_ascii_sync.sv \
+        ../../rtl/draw_rect_char.sv \
         ../common/tiff_writer.sv \
         top_vga_tb.sv 
 
+verilog work ../../rtl/uart/uart.v \
+        ../../rtl/uart/mod_m_counter.v \
+        ../../rtl/uart/uart_rx.v \
+        ../../rtl/uart/uart_tx.v \
+        ../../rtl/uart/fifo.v
 
-verilog work ../common/glbl.v \
-        ../../fpga/rtl/clk_wiz65.v \
-        ../../fpga/rtl/clk_wiz65_clk_wiz.v \
-
-vhdl work ../../fpga/rtl/MouseCtl.vhd \
-          ../../fpga/rtl/Ps2Interface.vhd \
-          ../../fpga/rtl/MouseDisplay.vhd \

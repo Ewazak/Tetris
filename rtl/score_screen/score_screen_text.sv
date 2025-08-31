@@ -110,6 +110,7 @@ module score_screen_text #(
     );
 
     always_comb begin : score_to_text_comb
+        integer ii;
         if (is_player1) begin
             for (ii = 0; ii < LEN_SCORE; ii = ii + 1) begin
                 text_left[ii]  = PLAYER1_LABEL[ii];

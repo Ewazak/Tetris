@@ -20,94 +20,71 @@
  * the difference between VER_SYNC_START and VER_TOTAL_TIME.
  */
 
-module top_vga_tb;
+ `timescale 1ns / 1ps
 
-    timeunit 1ns;
-    timeprecision 1ps;
-
-    /**
-     *  Local parameters
-     */
-
-    localparam CLK_PERIOD = 15;    
-    localparam CLK100_PERIOD = 10;
-
-
-    /**
-     * Local variables and signals
-     */
-
-    logic clk, rst, clk100MHz;
-    wire ps2data, ps2clk;
-    wire vs, hs;
-    wire [3:0] r, g, b;
-
-
-    /**
-     * Clock generation
-     */
-
-    initial begin
-        clk = 1'b0;
-        forever #(CLK_PERIOD/2) clk = ~clk;
-    end
-
-    initial begin
-        clk = 1'b0;
-        forever #(CLK100_PERIOD/2) clk100MHz = ~clk100MHz;
-    end
-
-
-    /**
-     * Submodules instances
-     */
-
-    top_vga dut (
-        .clk(clk),
-        .clk100MHz(clk100MHz),
-        .rst(rst),
-        .vs(vs),
-        .hs(hs),
-        .r(r),
-        .g(g),
-        .b(b),
-        .ps2_clk(ps2clk),
-        .ps2_data(ps2data)
-    );
-
-    tiff_writer #(
-        .XDIM(16'd1344),
-        .YDIM(16'd806),
-        .FILE_DIR("../../results")
-    ) u_tiff_writer (
-        .clk(clk),
-        .r({r,r}), // fabricate an 8-bit value
-        .g({g,g}), // fabricate an 8-bit value
-        .b({b,b}), // fabricate an 8-bit value
-        .go(vs)
-    );
-
-
-    /**
-     * Main test
-     */
-
-    initial begin
-        rst = 1'b0;
-        # 30 rst = 1'b1;
-        # 30 rst = 1'b0;
-
-        $display("If simulation ends before the testbench");
-        $display("completes, use the menu option to run all.");
-        $display("Prepare to wait a long time...");
-
-        wait (vs == 1'b0);
-        @(negedge vs) $display("Info: negedge VS at %t",$time);
-        @(negedge vs) $display("Info: negedge VS at %t",$time);
-
-        // End the simulation.
-        $display("Simulation is over, check the waveforms.");
-        $finish;
-    end
-
-endmodule
+ module top_vga_tb;
+ 
+     // Clock and reset
+     logic clk = 0;
+     logic rst = 1;
+ 
+     // Inputs
+     logic rx = 0;
+     logic ps2_clk = 0;
+     logic ps2_data = 0;
+ 
+     // Outputs
+     logic tx;
+     logic vs;
+     logic hs;
+     logic [3:0] r;
+     logic [3:0] g;
+     logic [3:0] b;
+     logic game_over_flag;
+ 
+     // Instantiate DUT
+     top_vga dut (
+         .clk(clk),
+         .rst(rst),
+         .rx(rx),
+         .tx(tx),
+         .vs(vs),
+         .hs(hs),
+         .r(r),
+         .g(g),
+         .b(b),
+         .ps2_clk(ps2_clk),
+         .ps2_data(ps2_data),
+         .game_over_flag(game_over_flag)
+     );
+ 
+     // Clock generation (50 MHz)
+     always #10 clk = ~clk;
+ 
+     // PS/2 clock simulation
+     always #50 ps2_clk = ~ps2_clk;
+ 
+     initial begin
+         $display("=== Starting top_vga Testbench ===");
+ 
+         // Apply reset
+         rst = 1;
+         #100;
+         rst = 0;
+ 
+         // Simulate a few cycles of RX and PS/2 input
+         #200;
+         rx = 1;
+         #40 rx = 0;
+         #60 rx = 1;
+ 
+         // Observe VGA signals for some time
+         repeat (1000) @(posedge clk);
+ 
+         $display("VGA HS=%b VS=%b RGB=%h%h%h GameOver=%b", hs, vs, r, g, b, game_over_flag);
+ 
+         $display("=== Testbench finished ===");
+         $stop;
+     end
+ 
+ endmodule
