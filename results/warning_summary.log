@@ -1,0 +1,12 @@
+Warnings, critical warnings and errors from synthesis and implementation
+
+Created: 2025-08-31 07:30:56
+
+----SYNTHESIS----
+WARNING: [Synth 8-5856] 3D RAM font_data_buf_reg  for this pattern/configuration is not supported. This will most likely be implemented in registers
+WARNING: [Synth 8-5856] 3D RAM font_data_buf_reg  for this pattern/configuration is not supported. This will most likely be implemented in registers
+WARNING: [Synth 8-5856] 3D RAM font_data_buf_reg  for this pattern/configuration is not supported. This will most likely be implemented in registers
+WARNING: [Synth 8-5856] 3D RAM font_data_buf_reg  for this pattern/configuration is not supported. This will most likely be implemented in registers
+
+----IMPLEMENTATION----
+WARNING: [Route 35-447] Congestion is preventing the router from routing all nets. The router will prioritize the successful completion of routing all nets over timing optimizations.

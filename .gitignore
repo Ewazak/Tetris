@@ -25,8 +25,8 @@ sim/xsim*
 sim/*.wdb
 sim/.hbs
 
-results/warning_summary.log
-results/top_vga_basys3.bit
+results/frame000.tif
+results/frame001.tif
 
 vivado*
 xvlog*
@@ -39,4 +39,4 @@ dvt_build.log
 xcelium.d
 xrun.log
 
-results/
+
